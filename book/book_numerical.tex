@@ -8,8 +8,8 @@
 % - rewrite Matrix
 % - dimensional analysis
 
-\title{\LARGE Annotated Algorithms in Nim\\[0.5em]
-       \large With Applications in Physics, Biology, Finance}
+\title{\LARGE Numerical Algorithms in Nim\\[0.5em]
+       \large Applications in Physics, Biology, Finance}
 
 \author{Massimo Di Pierro}
 \publisher{Experts4Solutions}
@@ -150,7 +150,7 @@ Email: massimo.dipierro@gmail.com
 \end{verbatim}
 
 Library of Congress Cataloging-in-Publication Data: \\ \\
-ISBN: ISBN-XXXX \\
+ISBN: XXX \\
 Build Date: \today
 }
 
@@ -178,9 +178,9 @@ Build Date: \today
 
 \goodbreak\chapter{Introduction}
 
-This is a port to Nim of a previous edition of this book from the same author. The original version of this book was in Python and was assembled from lectures given by the author over a period of 10 years at the School of Computing of DePaul University. The lectures cover multiple classes, including Analysis and Design of Algorithms, Scientific Computing, Monte Carlo Simulations, and Parallel Algorithms. These lectures teach the core knowledge required by any scientist interested in numerical algorithms and by students interested in computational finance.
+This is a port to Nim of a previous edition of this book from the same author. The original version of this book was in Python and was titled ``Annotated Algorithms in Python''. It was assembled from lectures given by the author over a period of 10 years at the School of Computing of DePaul University. The lectures cover multiple classes, including Analysis and Design of Algorithms, Scientific Computing, Monte Carlo Simulations, and Parallel Algorithms. These lectures teach the core knowledge required by any scientist interested in numerical algorithms and by students interested in computational finance.
 
-Over time the author has started to appreciate and love the syntax of Nim, its build speed, and its running speed, and it seemed a good language for the development of scientific applications that does not compromise on performance.
+We chose Nim because its syntax closely resembles that of Python, making the transition from the original edition natural for readers already familiar with Python, while at the same time Nim is as fast as the C language. This combination makes Nim a good choice for the development of scientific applications that does not compromise on performance. Over time the author has started to appreciate and love the syntax of Nim, its build speed, and its running speed.
 
 The notes are not comprehensive, yet they try to identify and describe the most important concepts taught in those courses using a few common tools and unified notation.
 
@@ -281,6 +281,8 @@ All the code included in these notes is released by the author under the three-c
 
 Many thanks to Alan Etkins, Brian Fox, Dan Bowker, Ethan Sudman, Holly Monteith, Konstantinos Moutselos, Luca De Alfaro, Michael Gheith, Paula Mikrut, Sean Neilan, and John Plamondon for reviewing different editions of this book. We also thank all the students of our classes for their useful comments and suggestions. Finally, we thank Wikipedia, from which we borrowed a few ideas and examples.
 
+We also wish to thank Claude by Anthropic for significant help in reviewing this manuscript, including catching technical inaccuracies, clarifying explanations, and suggesting improvements throughout the text.
+
 \goodbreak\chapter{Overview of the Nim Language}
 
 \index{Nim}
@@ -302,6 +304,36 @@ You can find tutorials, the language manual, and the standard library reference 
 
 You may skip this chapter if you are already familiar with the Nim language; the rest of the book uses only the constructs introduced here.
 
+\goodbreak\section{The Nim REPL}\index{REPL}\index{inim}
+
+While Nim is a compiled language, it ships with tooling that makes it possible to evaluate expressions interactively, in the same spirit as the Python REPL used in the original edition of this book. The interactive shell is convenient for exploring the language, trying out small expressions, inspecting the types inferred by the compiler, and quickly verifying the behavior of procedures from the standard library before committing them to a source file.
+
+The most widely used interactive front-end is {\ft inim}, an external tool that can be installed with Nim's package manager:
+\begin{lstlisting}
+nimble install inim
+\end{lstlisting}
+
+Once installed, starting the REPL is as simple as typing:
+\begin{lstlisting}
+inim
+\end{lstlisting}
+
+This opens a prompt where each line is compiled and executed on the fly:
+\begin{lstlisting}
+nim> let x = 2 + 3
+nim> echo x
+5
+nim> import std/math
+nim> echo sqrt(2.0)
+1.4142135623730951
+\end{lstlisting}
+
+Multi-line definitions (procedures, types, control-flow blocks) are supported by indentation, exactly as in a regular Nim source file. Variables and imports declared in the session remain available for the rest of the session, so the REPL behaves as an incremental sandbox.
+
+For users who prefer not to install an extra tool, Nim itself provides a lightweight alternative through the {\ft nim secret} command, which starts a small interpreter based on the compiler's VM. It supports a subset of the language sufficient for arithmetic, string manipulation, and most standard-library calls that do not rely on the C backend.
+
+Throughout this book we will mostly write complete programs and compile them with {\ft nim c -r}, but the REPL is a useful companion for experimenting with the snippets as you read.
+
 \goodbreak\section{Variables, types, and basic operators}
 
 \goodbreak\subsection{{\ft let}, {\ft var}, and {\ft const}}
@@ -322,6 +354,8 @@ var n: int               # zero-initialized
 var x: float = 0.5
 let xs: seq[float] = @[]
 \end{lstlisting}
+
+The {\ft @} symbol used in {\ft @[]} is the sequence (heap-allocated, growable array) constructor. Written in front of an array literal it converts that fixed-size array into a {\ft seq}; for example, {\ft @[1, 2, 3]} is a {\ft seq[int]} containing three elements, and {\ft @[]} is an empty {\ft seq} whose element type is taken from the surrounding context (here, {\ft float}). Without the {\ft @}, the literal {\ft [1, 2, 3]} would denote a fixed-size {\ft array[3, int]} instead. We will use the {\ft @[\dots]} syntax extensively throughout the book whenever we need a dynamically sized list of values, much as one would use Python's {\ft [\dots]} list literals.
 
 \goodbreak\subsection{Numbers, booleans, and characters}
 
@@ -577,11 +611,39 @@ proc greet(name: string) =
   echo "Hello, ", name
 \end{lstlisting}
 
+\goodbreak\subsection{The {\ft discard} keyword}
+
+\index{discard}
+
+When a procedure returns a value, Nim does not let you call it as a statement and silently throw the result away: doing so is a compile-time error. This rule is intentional, and it catches the common mistake of forgetting to use a function's return value. When you really do want to ignore the result, you must say so explicitly with the {\ft discard} keyword:
+
+\begin{lstlisting}
+proc nextId(): int =
+  result = 42
+
+nextId()           # error: value of type 'int' has to be used
+discard nextId()   # ok: result intentionally thrown away
+\end{lstlisting}
+
+The same keyword is also used as a no-op statement, useful when the syntax requires a body but you have nothing to do (for example, in an empty branch of an {\ft if} or in a placeholder procedure):
+
+\begin{lstlisting}
+proc todo() =
+  discard           # placeholder body; does nothing
+
+if x > 0:
+  doSomething()
+else:
+  discard           # explicitly do nothing
+\end{lstlisting}
+
+We will see {\ft discard} used throughout the book whenever a procedure is called purely for its side effects (e.g., advancing the state of a Markov chain or invoking an external command) and its return value is not needed.
+
 \goodbreak\subsection{Generics}
 
 \index{generics}
 
-Generic parameters go in square brackets after the procedure name. The compiler instantiates a separate copy for each set of types used.
+Generic parameters go in square brackets after the procedure name. The compiler instantiates a separate copy for each set of types used. This is the analogous of {\ft template<class T>} in C++: {\ft T} is a type placeholder, and the compiler generates a specialized version of the procedure for every concrete type at the call sites.
 
 \begin{lstlisting}
 proc swap[T](a, b: var T) =
@@ -666,7 +728,41 @@ echo u + v                  # (4.0, 6.0)
 echo 0.5 * u                # (0.5, 1.0)
 \end{lstlisting}
 
-The indexing operators {\ft `[]`} and {\ft `[]=`} can also be overloaded; chapter 4's {\ft Matrix} type uses this trick to expose two-dimensional element access.
+Unary operators are overloaded the same way --- just declare a procedure that takes a single argument:
+\begin{lstlisting}
+proc `-`(v: Vec2): Vec2 = Vec2(x: -v.x, y: -v.y)
+echo -u                     # (-1.0, -2.0)
+\end{lstlisting}
+
+The indexing operators {\ft `[]`} and {\ft `[]=`} can also be overloaded, and they may take any number of indices of any type. This is the trick that chapter 4's {\ft Matrix} type uses to expose two-dimensional element access with the natural {\ft m[i, j]} syntax: the read form is implemented by {\ft `[]`} (which receives the row and column as two separate arguments), and the write form {\ft m[i, j] = value} is dispatched to {\ft `[]=`} (which additionally receives the value to store):
+\begin{lstlisting}
+type Grid = object
+  rows, cols: int
+  data: seq[float]
+
+proc `[]`(g: Grid, i, j: int): float =
+  g.data[i * g.cols + j]
+
+proc `[]=`(g: var Grid, i, j: int, value: float) =
+  g.data[i * g.cols + j] = value
+
+var g = Grid(rows: 2, cols: 3, data: newSeq[float](6))
+g[0, 1] = 4.2               # calls `[]=`(g, 0, 1, 4.2)
+echo g[0, 1]                # calls `[]`(g, 0, 1) -> 4.2
+\end{lstlisting}
+
+In-place compound operators such as {\ft +=}, {\ft -=}, {\ft *=}, and {\ft /=} are likewise just procedures, and overloading them lets a user-defined type behave like a built-in numeric type:
+\begin{lstlisting}
+proc `+=`(a: var Vec2, b: Vec2) =
+  a.x += b.x
+  a.y += b.y
+
+var w = Vec2(x: 1.0, y: 2.0)
+w += Vec2(x: 10.0, y: 20.0)
+echo w                       # (11.0, 22.0)
+\end{lstlisting}
+
+The {\ft Matrix} type in chapter 4 combines all of these: {\ft `[]`}/{\ft `[]=`} for $(i, j)$ access, the binary arithmetic operators between matrices, between a matrix and a scalar, and a unary {\ft `-`} for negation.
 
 \goodbreak\section{Object types and methods}
 
@@ -896,7 +992,7 @@ Most plotting calls in the book funnel through {\ft savePlot} or its variants fo
 The remaining chapters build a small Nim package, {\ft nlib}, organized as one umbrella module {\ft nlib.nim} that re-exports a handful of focused submodules under {\ft nlib/} (e.g. {\ft nlib/sorting.nim}, {\ft nlib/matrix.nim}, {\ft nlib/randomgen.nim}, ...). Listings tagged
 
 \begin{quote}
-{\ft \textbackslash begin\{lstlisting\}[caption=\{in file: \{\textbackslash ft nlib/$\langle$module$\rangle$.nim\}\}]}
+{\ft in file: nlib/$\langle$module$\rangle$.nim}
 \end{quote}
 
 belong to the named submodule; other listings live in their own files (named in the caption) or are inline examples meant to be typed at the REPL or compiled into a small program. A consumer of the library only needs
@@ -1726,7 +1822,45 @@ A list is a data structure in which data are not stored contiguously, and each e
 
 Lists are the appropriate choice when the number of elements can vary often and when their elements are usually accessed sequentially via iterations.
 
-In Nim, the corresponding type is {\ft seq[T]}, a contiguous, growable buffer of {\ft T} stored on the heap.
+A word of caution about terminology: in Nim, the type called {\ft seq[T]} is {\it not} a linked list. Despite the name, a {\ft seq[T]} is a contiguous, growable buffer of {\ft T} stored on the heap, with the same memory layout and asymptotic behavior as a C++ {\ft std::vector} or a Python {\ft list}. Random access is therefore $O(1)$, while inserting or removing in the middle is $O(n)$.
+
+True singly and doubly linked lists, with the access characteristics described at the beginning of this subsection, are provided by the standard library module {\ft std/lists} as {\ft SinglyLinkedList[T]}, {\ft DoublyLinkedList[T]}, and their ring (circular) variants {\ft SinglyLinkedRing[T]} and {\ft DoublyLinkedRing[T]}.
+
+Internally, these types do {\it not} keep their elements next to each other in memory. Each element is wrapped in a small heap-allocated node that holds the value plus one or two pointers. In a singly linked list, the node holds a {\ft next} pointer to the following node; in a doubly linked list, it holds both a {\ft next} and a {\ft prev} pointer. The list itself only stores a reference to the {\it head} node (and, for doubly linked lists, the {\it tail}), and traversal proceeds by following the chain of pointers:
+
+\begin{lstlisting}
+# Conceptual layout of a doubly linked list:
+#
+#   head -> [ prev=nil | "A" | next ] <-> [ prev | "B" | next ] <-> ... <- tail
+#
+# The nodes are scattered across the heap; only the
+# pointers stitch them together into a linear sequence.
+\end{lstlisting}
+
+This layout has a clear cost model: prepending or appending an element is $O(1)$, and so is inserting or deleting at a node whose address is already known (for example, because we kept the reference returned during a previous traversal). On the other hand, accessing the $k$-th element requires walking $k$ pointers from the head, which is $O(k)$, and traversal is generally less cache-friendly than walking a contiguous {\ft seq}.
+
+The {\ft std/lists} API mirrors this structure. The following example uses a {\ft DoublyLinkedList[string]}:
+
+\begin{lstlisting}
+import std/lists
+
+var lst = initDoublyLinkedList[string]()
+lst.append "B"        # @["B"]
+lst.append "C"        # @["B", "C"]
+lst.prepend "A"       # @["A", "B", "C"]
+
+for x in lst.items:   # iterate from head to tail
+  echo x              # A, B, C
+
+# Find a node and insert/delete using its reference:
+let n = lst.find("B") # returns the node holding "B" (or nil)
+if n != nil:
+  lst.remove n        # O(1) given the node reference
+\end{lstlisting}
+
+The singly linked variant {\ft SinglyLinkedList[T]} has the same surface API, except that it only supports forward traversal and that {\ft prepend} is $O(1)$ while {\ft append} is $O(n)$ (since reaching the last node requires walking the chain). The ring variants behave like their list counterparts, except that the last node's {\ft next} pointer wraps around to the head, so iteration is cyclic.
+
+Throughout this book we use {\ft seq[T]} as our default growable container, and we reach for {\ft std/lists} only on the rare occasions when the linked-list semantics (constant-time insertion or removal at a known node, or splicing two lists together without copying) really matter.
 
 \goodbreak\subsection{Stack}
 
@@ -2376,6 +2510,8 @@ proc kruskal*[V](
     if s.join(source, dest):
       result.add (source, dest, length)
 \end{lstlisting}
+
+The {\ft sort} procedure used above comes from {\ft std/algorithm} (imported on the first line of the listing) and expects a comparator: a procedure that returns a negative integer, zero, or a positive integer to indicate that its first argument is less than, equal to, or greater than its second. The {\ft cmp} procedure used inside the comparator is a built-in from Nim's {\ft system} module (automatically imported in every program) and provides exactly that three-way comparison for any ordered type --- here, the {\ft float} weight stored in the third position of each link tuple.
 
 The Kruskal algorithm goes as follows:
 \begin{eqnarray}
@@ -4958,7 +5094,7 @@ Here $\bar r$ is the current risk-free investment rate. Usually the risk is meas
 Consider the stock price $p_{it}$ of stock $i$ at time $t$ and its arithmetic daily return
 $r_{it}=(p_{i, t+1}-p_{it})/p_{it}$ given a risk-free interest equal to $\bar r$.
 
-For each stock, we can compute the average return and average risk (variance of daily returns) and display it in a risk-return plot as we did in chapter 2.
+For each stock, we can compute the average return and the risk (the standard deviation, i.e., the square root of the variance of daily returns) and display it in a risk-return plot as we did in chapter 2.
 
 We can try to build arbitrary portfolios by investing in multiple stocks at the same time. Modern portfolio theory states that there is a maximum Sharpe ratio and there is one portfolio that corresponds to it. It is called the tangency portfolio.
 
@@ -5007,7 +5143,7 @@ let cov = newMatrix(@[@[0.04, 0.006, 0.02],
                       @[0.006, 0.09, 0.06],
                       @[0.02, 0.06, 0.16]])
 \end{lstlisting}
-and the following expected returns (arithmetic returns, not log returns, because the former are additive, whereas the latter are not):
+and the following expected returns (arithmetic returns, not log returns: arithmetic returns are additive across the assets of a portfolio at a fixed time, so the portfolio return is the weighted average of the asset returns; log returns do not have this property, which is why MPT is naturally formulated in terms of arithmetic returns):
 \begin{lstlisting}
 let mu = newMatrix(@[0.10, 0.12, 0.15])
 \end{lstlisting}
@@ -7750,9 +7886,9 @@ number generator. An optimal choice is the one with the longest period.
 
 For a linear congruential generator, because of the {\ft mod} operation, the period is always less than or equal to $m$. When $c$ is nonzero, the period is equal to $m$ only if $c$ and $m$ are relatively prime, $a-1$ is divisible by all prime factors of $m$, and $a-1$ is a multiple of 4 when $m$ is a multiple of $4$.
 
-In the case of RANDU, the period is $m/4$. A better choice is using $a=7^5$ and $m=2^{31}-1$ (known as the Marsenne prime number) because it can be proven that $m$ is in fact the period of the generator:
+In the case of RANDU, the period is $m/4$. A better choice is using $a=7^5$ and $m=2^{31}-1$ (known as the Mersenne prime number) because it can be proven that $m$ is in fact the period of the generator:
 \begin{equation}
-x_i=(7^5x_{i-1})\textrm{mod}(2^{31}-1)  \label{Marsenne}
+x_i=(7^5x_{i-1})\textrm{mod}(2^{31}-1)  \label{Mersenne}
 \end{equation}
 
 Here are some examples of MCG used by various systems:
@@ -7766,6 +7902,18 @@ java.util.Random & $2^{48}$ & 25214903917 & 11 \\ \hline
 \end{tabular}
 
 When $c$ is set to zero, a linear congruential generator is also called a multiplicative congruential generator.
+
+Modern programming-language standard libraries no longer rely on linear congruential generators, because LCGs --- even with carefully tuned parameters --- exhibit hyperplane patterns in higher dimensions and have relatively short periods. The PRNGs shipped with current language runtimes use different recurrences (XOR/rotate/shift over a small word-aligned state, twisted feedback shift registers, counter-based PRFs, etc.) that pass much stronger empirical tests:
+
+\begin{tabular}{|llrl|} \hline
+Source & Algorithm & State (bits) & Period \\ \hline
+Python {\ft random} & Mersenne Twister (MT19937) & $19\,937$ & $2^{19937}-1$ \\
+C++ {\ft std::mt19937} & Mersenne Twister (MT19937) & $19\,937$ & $2^{19937}-1$ \\
+NumPy (default since 1.17) & PCG64 & $128$ & $2^{128}$ \\
+Nim {\ft std/random} & xoroshiro128+ & $128$ & $2^{128}-1$ \\ \hline
+\end{tabular}
+
+Among these, {\bf xoroshiro128+} (the default of Nim's standard library {\ft std/random} module) is the one we recommend for the Monte Carlo simulations later in this book whenever raw speed matters. It updates a 128-bit state with a handful of XOR, rotate, and shift instructions per draw --- noticeably faster than MT19937 or PCG64 on modern hardware --- and its period of $2^{128}-1$ is more than sufficient for any practical simulation. Cryptography is the one context in which we do {\it not} use it: like the LCGs above, xoroshiro128+ is a statistical generator, not a cryptographically secure one (see the discussion of CSPRNGs later in this section).
 
 \goodbreak\subsection{Defects of PRNGs}
 
@@ -7930,31 +8078,31 @@ where $x_{i-1}^{-1}$ is the multiplicative inverse of $x_{i-1}$ modulo $m$,
 for example, $x_{i-1}x_{i-1}^{-1}=1\textrm{mod}m$.
 
 
-\goodbreak\subsection{Marsenne twister}
+\goodbreak\subsection{Mersenne twister}
 
-One of the best PRNG algorithms (because of its long period, uniform distribution, and speed) is the Marsenne twister, which produces a 53-bit random number, 
+One of the best PRNG algorithms (because of its long period, uniform distribution, and speed) is the Mersenne twister, which produces a 53-bit random number, 
 and it has a period of $2^{19937}-1$ (this number is 6002 digits long!).
 Nim's {\ft std/random} module is built on top of a Mersenne-twister-style generator (specifically Xoshiro/Mersenne, depending on the implementation).
 Although discussing the inner working of this algorithm is beyond the scope of these notes, we provide a
-pure-Nim implementation of the Marsenne twister:
+pure-Nim implementation of the Mersenne twister:
 
-\index{class!MarsenneTwister}
+\index{class!MersenneTwister}
 
 %%% META:FILE:nlib/randomgen.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/randomgen.nim}}]
 type
-  MarsenneTwister* = ref object
+  MersenneTwister* = ref object
     w*: array[625, uint32]
     wi*: int
 
-proc newMarsenneTwister*(seed: uint32 = 4357'u32): MarsenneTwister =
-  result = MarsenneTwister()
+proc newMersenneTwister*(seed: uint32 = 4357'u32): MersenneTwister =
+  result = MersenneTwister()
   result.w[0] = seed
   for i in 1 ..< 625:
     result.w[i] = 69069'u32 * result.w[i-1]
   result.wi = 624
 
-proc random*(g: MarsenneTwister): float =
+proc random*(g: MersenneTwister): float =
   const
     N = 624
     M = 397
@@ -8092,7 +8240,7 @@ for k in 0 ..< 3:
     echo k, "\t", i, "\t", x
 \end{lstlisting}
 
-The Marsenne twister algorithm implemented in {\ft os.random} has leapfrogging built in. In fact, the module includes a {\ft random.jumpahead(n)} method that allows us to efficiently skip $n$ numbers.
+The Mersenne twister algorithm implemented in {\ft os.random} has leapfrogging built in. In fact, the module includes a {\ft random.jumpahead(n)} method that allows us to efficiently skip $n$ numbers.
 
 \goodbreak\subsection{Lehmer trees}
 
@@ -8155,7 +8303,7 @@ proc randint*(r: RandomSource, a, b: int): int =
   a + int(float(b - a + 1) * r.random())
 \end{lstlisting}
 
-Notice that the random {\ft RandomSource} constructor expects a generator such as {\ft MCG}, {\ft MarsenneTwister}, or simply {\ft random} (default value). The {\ft random()} method is a proxy method for the equivalent method of the underlying generator object.
+Notice that the random {\ft RandomSource} constructor expects a generator such as {\ft MCG}, {\ft MersenneTwister}, or simply {\ft random} (default value). The {\ft random()} method is a proxy method for the equivalent method of the underlying generator object.
 
 We can use {\ft randint} to generate a random choice from a finite set when each option has the same probability:
 
@@ -9580,9 +9728,10 @@ method simulateOnce(s: NuclearReactor): float =
     let d2 = -ln(rand(1.0)) / s.density
     let p1 = (p[0] + vx*d1, p[1] + vy*d1, p[2] + vz*d1)
     let p2 = (p[0] - vx*d2, p[1] - vy*d2, p[2] - vz*d2)
-    if p1[0]^2 + p1[1]^2 + p1[2]^2 < s.radius:
+    let r2 = s.radius * s.radius
+    if p1[0]^2 + p1[1]^2 + p1[2]^2 < r2:
       events.add p1
-    if p2[0]^2 + p2[1]^2 + p2[2]^2 < s.radius:
+    if p2[0]^2 + p2[1]^2 + p2[2]^2 < r2:
       events.add p2
     if events.len > s.threshold:
       return 1.0
@@ -9916,7 +10065,7 @@ For large $n$, the following distribution in $k/n$ tends to a Gaussian distribut
 Let"s assume an Ito process for our random walk: $\varepsilon _n$ is normally
 (Gaussian) distributed. We consider discrete time intervals of equal length $%
 \Delta _t$, at each time step if $\varepsilon _n=\varepsilon $ with
-probability mass function $p(\varepsilon )=e^{-\varepsilon ^2/2}$. It turns
+probability density function $p(\varepsilon )=\frac{1}{\sqrt{2\pi}}e^{-\varepsilon ^2/2}$. It turns
 out that eq.(\ref{markov1}) gives
 \begin{equation}
 X_n = n \mu + \Delta _x\sum_{i=0}^{i<n}\varepsilon _i
@@ -9934,9 +10083,10 @@ to $n$, whereas the standard deviation is proportional to $\sqrt{n}$.
 \Delta _x^2)}dx \\
 &=&\frac 1{\sqrt{2\pi }}\int_{(a-n\mu)/(\sqrt{n}\Delta _x)}^{(b-n\mu)/(\sqrt{n}\Delta
 _x)}e^{-x^2/2}dx \\
-&=&\textrm{erf}(\frac {b-n\mu}{\sqrt{n}\Delta _x})-\textrm{erf}(\frac {a-n\mu}{\sqrt{n}\Delta
-_x})
+&=&\frac{1}{2}\!\left[\textrm{erf}\!\left(\frac {b-n\mu}{\sqrt{2n}\,\Delta _x}\right)-\textrm{erf}\!\left(\frac {a-n\mu}{\sqrt{2n}\,\Delta
+_x}\right)\right]
 \end{eqnarray}
+where we have used the standard identity $\int_\alpha^\beta e^{-x^2/2}\,dx/\sqrt{2\pi} = \tfrac{1}{2}[\textrm{erf}(\beta/\sqrt{2}) - \textrm{erf}(\alpha/\sqrt{2})]$ relating the standard normal CDF to the error function.
 
 \goodbreak\section{Option pricing}
 \index{Options}
@@ -10010,20 +10160,20 @@ S_{n+1} &=&S_nd\text{ with probability }1-p
 \end{eqnarray}
 where $u>1$ and $0<d<1$ are measures for historic data. It follows that for $%
 \tau =n\Delta _t$, the probability that the spot price of the asset at
-expiration is $S_uu^id^{n-i}$ is given by
+expiration is $S_0u^id^{n-i}$ is given by
 
 \begin{equation}
-\textrm{Prob}(S_\tau =S_uu^id^{n-i})=\binom nip^i(1-p)^{n-i}
+\textrm{Prob}(S_\tau =S_0u^id^{n-i})=\binom nip^i(1-p)^{n-i}
 \end{equation}
-and therefore
+and therefore (the binomial probabilities already sum to one, so no extra normalization is needed)
 \begin{equation}
-C_{call}=e^{-r\tau }\frac 1n\sum_{i=0}^{i\leq n}\binom nip^i(1-p)^{n-i}\max
-(S_uu^id^{n-i}-A, 0)  \label{bincall}
+C_{call}=e^{-r\tau }\sum_{i=0}^{n}\binom nip^i(1-p)^{n-i}\max
+(S_0u^id^{n-i}-A, 0)  \label{bincall}
 \end{equation}
 and
 \begin{equation}
-C_{put}=e^{-r\tau }\frac 1n\sum_{i=0}^{i\leq n}\binom nip^i(1-p)^{n-i}\max
-(A-S_uu^id^{n-i}, 0)  \label{binput}
+C_{put}=e^{-r\tau }\sum_{i=0}^{n}\binom nip^i(1-p)^{n-i}\max
+(A-S_0u^id^{n-i}, 0)  \label{binput}
 \end{equation}
 
 The parameters of this model are $u, d$ and $p$, and they must be determined
@@ -10082,10 +10232,10 @@ is not a physical parameter; it has nothing to do with the asset. It has to
 do with the precision of our computation. Let"s assume that $\Delta _t=1$ day.
 
 \item  $\mu $ is a drift term, and it represents the expected rate of return
-of the asset over a time scale of one year. It is usually set equal to the risk-free rate.
+of the asset over a time scale of one year. For risk-neutral option pricing the relevant drift in the {\it log-return} formulation is not the risk-free rate $r$ itself, but $r - \sigma^2/2$ (the It\^o convexity correction): with this choice the discounted spot $e^{-rt}S_t$ is a martingale, which is the no-arbitrage condition behind the Black--Scholes price. Setting $\mu = r$ in the equation above instead of $\mu = r - \sigma^2/2$ overprices the option by a factor that grows with $\sigma^2 \tau$.
 
-\item  $\sigma $ is called volatility, and it represents the number of
-stochastic fluctuations of the asset over a time interval of one year.
+\item  $\sigma $ is called volatility, and it represents the typical size of
+stochastic fluctuations of the log-price over a time interval of one year.
 \end{itemize}
 
 Notice that this model is equivalent to the previous binomial model for large time intervals, in the same sense as the binomial distribution for large values of $n$ approximates the Gaussian distribution. For large $T$, converge to the same result.
@@ -10333,36 +10483,34 @@ for x in metropolisDecorrelate(P, Q, @[0.0, 0.0]):
 \subsection{The Ising model}
 \index{Ising model}
 
-A typical example of application of the Metropolis is the Ising model. This model describes a spin system, for example, a ferromagnet. A spin system consists of a regular crystalline structure, and each vertex is an atom. Each atom is a small magnet, and its magnetic orientation can be +1 or $-$1. Each atom interacts with the external magnetic field and with the magnetic field of its six neighbors (think about the six faces of a cube). We use the index $i$ to label an atom and $s_i$ its spin.
+The Ising model, proposed by Wilhelm Lenz and analyzed in one dimension by his student Ernst Ising in 1925, is one of the most studied models of statistical mechanics. It captures, in a deceptively simple form, the essence of a phase transition: a competition between an ordering interaction --- spins want to align with their neighbors --- and thermal disorder, which tends to randomize them. Despite its simplicity, the model exhibits a sharp, genuine phase transition in two and higher dimensions and has become a paradigm for the study of critical phenomena, magnetism, alloys, lattice gases, and even spin-glass-like models of neural networks.
 
-The entire system has a total energy given by
-
+The model is defined on a regular lattice (here a three-dimensional simple cubic lattice, but the same algorithm works in any dimension) where each site $i$ carries a binary spin $s_i \in \{+1, -1\}$. The total energy of a configuration $\{s_i\}$ is
 \begin{equation}
-E(s) = - \sum_i s_i h - \sum_{ij|dist_{ij}=1} s_i s_j
+E(\{s_i\}) = -J \sum_{\langle i, j \rangle} s_i s_j - h \sum_i s_i,
 \end{equation}
+where $J > 0$ is the coupling strength between nearest-neighbor pairs (the notation $\langle i, j \rangle$ means each unordered nearest-neighbor pair is counted once), $h$ is an external magnetic field, and the first sum runs over the $z$ nearest neighbors of each site ($z = 6$ for the simple cubic lattice, $z = 4$ for the square lattice, $z = 2$ for the chain). In what follows we set $J = 1$ and the Boltzmann constant $k_B = 1$, so temperatures and fields are expressed in units of $J/k_B$ and $J$, respectively.
 
-where $h$ is the external magnetic field, the first sum is over all spin sites, and the second is about all couples of next neighbor sites. In the absence of spin-spin interaction, only the first term contributes, and the energy is lower when the direction of the $s_i$ (their sign) is the same as $h$. In absence of $h$, only the second term contributes. The contribution to each couple of spins is positive if their sign is the opposite, and negative otherwise.
-
-In the absence of external forces, each system evolves toward the state of minimum energy, and therefore, for a spin system, each spin tends to align itself in the same direction as its neighbors and in the same direction as the external field $h$.
-
-Things change when we turn on heat. Feeding energy to the system makes the atoms vibrate and the spins randomly flip. The higher the temperature, the more they randomly flip.
-
-The probability of finding the system in a given state $s$ at a given temperature $T$ is given by the Boltzmann distribution:
-
+The aligned configuration with all $s_i$ pointing in the direction of $h$ minimizes both terms, so at zero temperature the system is fully ordered. As we feed energy in by raising the temperature $T$, thermal fluctuations randomly flip spins, and at high enough $T$ the orientations become essentially independent. The probability of finding the system in a given configuration $s$ in thermal equilibrium is the Boltzmann distribution
 \begin{equation}
-p(s) = \exp\left(-\frac{E(s)}{KT}\right)
+p(s) = \frac{1}{Z} \exp\!\left(-\frac{E(s)}{k_B T}\right), \qquad Z = \sum_s \exp\!\left(-\frac{E(s)}{k_B T}\right),
 \end{equation}
-where $K$ is the Boltzmann constant.
+where $Z$ is the partition function (which we will not need to compute explicitly).
 
-We can now use the Metropolis algorithm to generate possible states of the system $s$ compatible with a given temperature $T$ and measure the effects on the average magnetization (the average spin) as a function of $T$ and possibly an external field $h$.
+A central result is that there exists a critical temperature $T_c$, depending on the lattice dimension, separating an ordered phase ($T < T_c$, nonzero spontaneous magnetization in the thermodynamic limit even at $h = 0$) from a disordered phase ($T > T_c$, zero magnetization at $h = 0$). In one dimension $T_c = 0$: thermal fluctuations destroy any long-range order at any finite temperature. In two dimensions Onsager solved the model exactly in 1944 and obtained $T_c = 2 / \ln(1 + \sqrt{2}) \approx 2.269$ on the square lattice. In three dimensions no closed-form solution is known, and high-precision numerical estimates on the simple cubic lattice give $T_c \approx 4.5115$. The simulation below is in three dimensions, so the crossover from order to disorder visible in fig.~\ref{ising-mag} should be looked for around this value.
 
-Also notice that in the case of the Boltzmann distribution, 
-
+We sample configurations from $p(s)$ using the Metropolis algorithm of the previous subsection. Two features of the Boltzmann distribution make the algorithm particularly cheap. First, the ratio
 \begin{equation}
-\frac{p(s")}{p(s)} = exp\left(\frac{E(s)-E(s")}{KT}\right)
+\frac{p(s')}{p(s)} = \exp\!\left(-\frac{E(s') - E(s)}{k_B T}\right) = \exp\!\left(-\frac{\Delta E}{k_B T}\right)
 \end{equation}
+depends only on the energy difference $\Delta E$, so the partition function $Z$ cancels out. Second, the proposal $Q$ that the Metropolis algorithm requires is free for us to choose. We pick the simplest possible local move: flip one randomly chosen spin $s_i \to -s_i$. With this choice $\Delta E$ involves only the chosen site and its neighbors, and a short calculation gives
+\begin{equation}
+\Delta E = 2 s_i \left( h + J \sum_{j \in \mathrm{nbrs}(i)} s_j \right),
+\label{eq:ising-de}
+\end{equation}
+which evaluates in constant time, independent of the lattice size. The Metropolis acceptance condition $\xi < \exp(-\Delta E / k_B T)$, with $\xi$ uniformly distributed in $(0, 1)$, is therefore equivalent to $-\Delta E > k_B T \ln \xi$.
 
-only depends on the change in energy. The Metropolis algorithm gives us the freedom to choose a function {\ft Q} that changes the state of the system and depends on the current state. We can choose such a function so that we only try to flip one spin at a time. In this case, the {\ft P} algorithm simplifies because we no longer need to compute the total energy of the system at each iteration, but only the variation of energy due to the flipping of that one spin.
+Two more practical points before we list the code. We use {\it periodic boundary conditions}: lattice site $(x, y, z)$ is identified with $(x \pm n, y, z)$, $(x, y \pm n, z)$, and $(x, y, z \pm n)$, so the lattice has the topology of a 3-torus and there are no surface effects to bias the bulk behavior. (In the code, the modular arithmetic {\ft ((x mod n) + n) mod n} implements this wrap-around correctly even for negative indices, which is necessary because Nim's {\ft mod} can return negative values.) And, before averaging any observable, the chain must be allowed to {\it equilibrate} from its initial state for some number of sweeps; the early samples are correlated with the initial condition and should be discarded.
 
 Here is the code for a three-dimensional spin system:
 
@@ -10430,6 +10578,15 @@ main()
 \end{lstlisting}
 
 
+A note on the code: the variable named {\ft dE} actually stores $-\Delta E$ rather than $\Delta E$, because that is the quantity that appears directly in the acceptance test {\ft dE > t * ln(rand(1.0))} (which is the rearrangement of $\xi < \exp(-\Delta E / k_B T)$ derived above). After accepting a flip, the magnetization is updated incrementally with {\ft magnetization += 2 * ising[x, y, z]}: by the time this line runs the spin has already been flipped, so the increment $2 s_i^{\rm new} = -2 s_i^{\rm old}$ is exactly the change in $\sum_i s_i$. Updating the magnetization incrementally avoids re-summing the entire lattice on every accepted move and is essential to keep each Metropolis step $O(1)$.
+
+Beyond the magnetization, two related observables are routinely measured in equilibrium and provide much sharper diagnostics of the phase transition than $\langle M \rangle$ alone:
+\begin{itemize}
+\item the magnetic susceptibility $\chi = \dfrac{1}{k_B T}\big(\langle M^2 \rangle - \langle M \rangle^2\big)$, which diverges at $T_c$ in the thermodynamic limit and develops a sharp finite-size peak that is the standard tool for locating the transition;
+\item the specific heat per spin $C = \dfrac{1}{N k_B T^2}\big(\langle E^2 \rangle - \langle E \rangle^2\big)$, which also peaks at $T_c$.
+\end{itemize}
+Because of the $\mathbb{Z}_2$ symmetry $s_i \to -s_i$ at $h = 0$, an infinite-time average gives $\langle M \rangle = 0$ exactly even in the ordered phase: the simulation will spend long periods in the $+M$ basin and long periods in the $-M$ basin and average to zero. To diagnose the ordered phase one therefore measures $\langle |M| \rangle$ rather than $\langle M \rangle$.
+
 Fig.~\ref{ising-mag} shows how the spins tend to align in the direction of the external magnetic field, but the larger the temperature (left to right), the more random they are, and the average magnetization tends to zero. The higher the external magnetic field (bottom to top curves), the longer it takes for the transition from order (aligned spins) to chaos (random spins).
 
 \begin{figure}[ht]
@@ -10444,6 +10601,8 @@ Fig.~\ref{ising-state} shows the two-dimensional section of some random three-di
 \caption{Random Ising states (2D section of 3D) for different temperatures.\label{ising-state}}
 \end{figure}
 
+A practical limitation of the local single-spin-flip Metropolis algorithm shown above is {\it critical slowing down}: as $T$ approaches $T_c$, the autocorrelation time $\tau$ of any observable grows as $\tau \sim L^z$ with a dynamical exponent $z \approx 2$, so doubling the linear lattice size $L$ multiplies the cost of a thermalized run by roughly four. The reason is that near criticality the system develops large correlated domains; flipping a single spin deep inside such a domain almost always raises the energy and is therefore rejected. {\it Cluster algorithms} --- the Swendsen--Wang (1987) and Wolff (1989) algorithms --- bypass this problem by building entire correlated clusters of like-aligned spins and flipping them as a single update, bringing $z$ down to nearly zero. They are the methods of choice for high-precision Ising simulations near the critical point and are recommended further reading for the reader interested in numerical statistical mechanics.
+
 \section{Simulated annealing}
 \index{simulate annealing}\index{protein folding}
 
@@ -10456,7 +10615,7 @@ Simulated annealing does not assume the function is differentiable or continuous
 \subsection{Protein folding}
 
 In the following we apply simulated annealing to the problem of folding of a protein.
-A protein is a sequence of amino-acids. It is normally unfolded, and amino-acids are on a line. When placed in water, it folds. This is because some amino-acids are hydrophobic (repel water) and some are hydrophilic (like contact with water), therefore the protein tries to acquire a three-dimensional shape that minimizes the surface of hydrophobic amino-acids in contact with water~\cite{folding}. This is represented graphically in fig.~\ref{folding}.
+A protein is a linear chain of amino acids, synthesized one residue at a time on the ribosome. As soon as the chain emerges into the aqueous environment of the cell it folds, typically within microseconds to seconds, into a specific three-dimensional shape (its {\it native state}) that determines its biological function. The driving force is largely the hydrophobic effect: some amino acids are hydrophobic (their side chains repel water), some are hydrophilic (they prefer contact with water), and the chain rearranges itself so that hydrophobic residues are buried in the protein's interior while hydrophilic ones face the solvent. Equivalently, the native state is the configuration that minimizes the area of hydrophobic surface exposed to water~\cite{folding}. This is represented graphically in fig.~\ref{folding}.
 
 \begin{figure}[ht]
 \centering\includegraphics[width=2in]{images/folding.png}
@@ -10545,9 +10704,11 @@ proc main() =
 main()
 \end{lstlisting}
 
-The {\ft moves} dictionary is a dictionary of functions. For each solid angle (0--5), {\ft moves[angle]} is a function that maps {\ft x, y, z}, the coordinates of an amino acid, to the coordinates of the cube at that solid angle.
+This is the well-known {\it HP lattice model}, introduced by Ken Dill in 1985~\cite{folding}: the protein is reduced to a self-avoiding walk on a (here cubic) lattice in which each residue is classified as hydrophobic (H) or polar (P), and the energy counts only hydrophobic--solvent contacts. Despite its drastic simplification, it captures the cooperative collapse driven by the hydrophobic effect and is a standard playground for studying folding algorithms.
 
-The annealing procedure is performed in the {\ft main} function. The {\ft fold} procedure is the same step as the Metropolis step. The purpose of the {\ft while} loop in the {\ft fold} function is to find a valid fold for the accept--reject step. Some folds are invalid because they are not physical and would require two amino-acids to occupy the same portion of space. When this happens, the {\ft compute\_folding} method returns {\ft None}, indicating that one must try a different folding.
+The {\ft move} procedure dispatches on the solid-angle code {\ft 0..5} and maps a cell {\ft (x, y, z)} to the coordinates of the neighbouring cube in that direction.
+
+The annealing procedure is performed in the {\ft main} function. The {\ft fold} procedure is one Metropolis step. The purpose of the {\ft while} loop inside {\ft fold} is to draw a valid trial folding for the accept--reject step. Some trials are invalid because they are not physical: they would require two amino-acids to occupy the same lattice cell (a self-avoiding-walk violation). When this happens, {\ft computeFolding} returns an empty {\ft Table}, and the loop tries again with a different randomly perturbed angle.
 
 \chapter{Parallel Algorithms}
 \index{parallel algorithms}
@@ -10860,476 +11021,6 @@ S_p = \frac{1}{\alpha+(1-\alpha)/p} < \frac{1}{\alpha}
 \end{equation}
 
 Therefore the speedup is theoretically limited.
-
-\goodbreak\section{Message passing}\index{message passing}
-
-Consider the following Nim program:
-\begin{lstlisting}
-import std/posix
-
-proc f() =
-  if fork() != 0:
-    echo true
-  else:
-    echo false
-f()
-\end{lstlisting}
-The output of the current program is
-\begin{lstlisting}
-true
-false
-\end{lstlisting}
-
-{\ft fork} (from {\ft std/posix}) creates a copy of the current process (a child). The parent gets the child's PID; the child gets 0. So the {\ft if} branches both ways, on different processes.
-
-The source of {\ft PSim} is included in the {\ft psim.nim} file.
-
-\index{PSim emulator}\index{class!PSim}\index{send}\index{recv}\index{point-to-point}
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-import std/[json, threadpool, locks]
-
-type
-  PSim* = ref object
-    nprocs*, rank*: int
-    topology*: Topology
-    pipes*: seq[seq[Channel[string]]]
-    logFile*: File
-
-proc newPSim*(p: int, topology = SWITCH(),
-              logFilename = ""): PSim =
-  ## Spawns `p-1` worker threads via `std/threadpool` and creates one
-  ## `Channel[string]` per (sender, receiver) pair; messages are
-  ## serialized via JSON so any value type can flow through a channel.
-  result = PSim(nprocs: p, topology: topology, rank: 0)
-  result.pipes = newSeq[seq[Channel[string]]](p)
-  for i in 0 ..< p:
-    result.pipes[i] = newSeq[Channel[string]](p)
-    for j in 0 ..< p:
-      result.pipes[i][j].open()
-  if logFilename.len > 0:
-    result.logFile = open(logFilename, fmWrite)
-
-proc log*(s: PSim, message: string) =
-  if not s.logFile.isNil: s.logFile.write(message)
-
-proc privateSend*[T](s: PSim, j: int, data: T) =
-  if j < 0 or j >= s.nprocs:
-    raise newException(IOError, "send: invalid rank")
-  s.pipes[s.rank][j].send($ %*data)
-
-proc send*[T](s: PSim, j: int, data: T) =
-  if not s.topology(s.rank, j):
-    raise newException(IOError, "topology violation")
-  s.privateSend(j, data)
-
-proc privateRecv*[T](s: PSim, j: int, _: typedesc[T]): T =
-  if j < 0 or j >= s.nprocs:
-    raise newException(IOError, "recv: invalid rank")
-  let raw = s.pipes[j][s.rank].recv()
-  to(parseJson(raw), T)
-
-proc recv*[T](s: PSim, j: int, t: typedesc[T]): T =
-  if not s.topology(s.rank, j):
-    raise newException(IOError, "topology violation")
-  s.privateRecv(j, t)
-\end{lstlisting}
-
-\index{communicator}
-
-An instance of the class {\ft PSim} is an object that can be used to determine the total number of parallel processes, the rank of each running process, to send messages to other processes, and to receive messages from them. It is usually called a {\it communicator}; {\ft send} and {\ft recv} represent the simplest type of communication pattern, point-to-point communication.
-
-A PSim program starts by importing and creating an instance of the {\ft PSim} class. The constructor takes two arguments, the number of parallel processes you want and the network topology you want to emulate. Before returning the {\ft PSim} instance, the constructor makes $p-1$ copies of the running process and creates sockets connecting each two of them. Here is a simple example in which we make two parallel processes and send a message from process 0 to process 1:
-
-\begin{lstlisting}
-import psim
-
-let comm = newPSim(2, SWITCH())
-if comm.rank == 0:
-  comm.send(1, "Hello World")
-elif comm.rank == 1:
-  let message = comm.recv(0, string)
-  echo message
-\end{lstlisting}
-
-Here is a more complex example that creates $p=10$ parallel processes, and node 0 sends a message to each one of them:
-
-
-\begin{lstlisting}
-import psim
-
-const p = 10
-let comm = newPSim(p, SWITCH())
-if comm.rank == 0:
-  for other in 1 ..< p:
-    comm.send(other, "Hello " & $p)
-else:
-  let message = comm.recv(0, string)
-  echo message
-\end{lstlisting}
-
- Following is a more complex example that implements a parallel scalar product. The process with rank 0 makes up two vectors and distributes pieces of them to the other processes. Each process computes a part of the scalar product. Of course, the scalar product runs in linear time, and it is very inefficient to parallelize it, yet we do it for didactic purposes.
-
-\index{parallel!scalar product}
-
-%%% META:FILE:psim_scalar.nim
-\begin{lstlisting}[caption={in file: {\ft psim\_scalar.nim}}]
-import psim, std/random
-
-proc scalarProductTest1(n, p: int) =
-  let comm = newPSim(p)
-  let h = n div p
-  var a, b: seq[float]
-  if comm.rank == 0:
-    randomize()
-    for _ in 0 ..< n: a.add rand(1.0)
-    for _ in 0 ..< n: b.add rand(1.0)
-    for k in 1 ..< p:
-      comm.send(k, a[k*h ..< k*h + h])
-      comm.send(k, b[k*h ..< k*h + h])
-  else:
-    a = comm.recv(0, seq[float])
-    b = comm.recv(0, seq[float])
-  var scalar = 0.0
-  for i in 0 ..< h: scalar += a[i] * b[i]
-  if comm.rank == 0:
-    for k in 1 ..< p: scalar += comm.recv(k, float)
-    echo scalar
-  else:
-    comm.send(0, scalar)
-
-scalarProductTest1(10, 2)
-\end{lstlisting}
-
-Most parallel algorithms follow a similar pattern. One process has access to IO. That process reads and scatters the data. The other processes perform their part of the computation; the results are reduced (aggregated) and sent back to the root process. This pattern may be repeated by multiple functions, perhaps in loops. Different functions may handle different data structure and may have different communication patterns. The one thing that must be constant throughout the run is the number of processes because one wants to pair each process with one computing unit.
-
- In the following, we implement a parallel version of the {\ft mergesort}. At each step, the code splits the problem into two smaller problems. Half of the problem is solved by the process that performed the split and assigns the other half to an existing free process. When there are no more free processes, it reverts to the nonparallel {\ft mergesort} step. The {\ft merge} function here is the same as the nonparallel {\ft mergesort} of chapter 3.
-
-\index{mergesort!parallel}
-
-%%% META:FILE:psim_mergesort.nim
-\begin{lstlisting}[caption={in file: {\ft psim\_mergesort.nim}}]
-import psim, nlib, std/random
-# `merge` and `mergesort` are reused from nlib (chapter 3).
-
-proc mergesortTest(n, p: int) =
-  let comm = newPSim(p)
-  if comm.rank == 0:
-    randomize()
-    var data: seq[float]
-    for _ in 0 ..< n: data.add rand(1.0)
-    comm.send(1, data[n div 2 .. ^1])
-    mergesort(data, 0, n div 2)
-    let other = comm.recv(1, seq[float])
-    for i, v in other:
-      data[n div 2 + i] = v
-    merge(data, 0, n div 2, n)
-    echo data
-  else:
-    var data = comm.recv(0, seq[float])
-    mergesort(data)
-    comm.send(0, data)
-
-mergesortTest(20, 2)
-\end{lstlisting}
-
-More interesting patterns are global communication patterns implemented on top of {\ft send} and {\ft recv}. Subsequently, we discuss the most common: broadcast, scatter, collect, and reduce. Our implementation is not the most efficient, but it is the simplest. In principle, there should be a different implementation for each type of network topology to take advantage of its features.
-
-
-\goodbreak\subsection{Broadcast}\index{broadcast}
-
-The simplest type of broadcast is the one-2-all, which consists of one process (source) sending a message (value) to every other process. A more complex broadcast is when each process broadcasts a message simultaneously and each node receives the list of values ordered by the rank of the sender:
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-proc one2allBroadcast*[T](s: PSim, source: int, value: T): T =
-  if s.rank == source:
-    for i in 0 ..< s.nprocs:
-      if i != source:
-        s.privateSend(i, value)
-    result = value
-  else:
-    result = s.privateRecv(source, T)
-
-proc all2oneCollect*[T](s: PSim, destination: int, value: T): seq[T]
-proc all2allBroadcast*[T](s: PSim, value: T): seq[T] =
-  var vector = s.all2oneCollect(0, value)
-  vector = s.one2allBroadcast(0, vector)
-  vector
-\end{lstlisting}
-
-We have implemented the all-to-all broadcast using a trick. We collected all values and sent them to the node with rank 0 (via a function collect), and then we did a one-to-all broadcast of the entire list from node 0. In general, the implementation depends on the topology of the available network.
-
-Here is an example of an application of broadcasting:
-
-\begin{lstlisting}
-import psim
-
-const p = 10
-let comm = newPSim(p, SWITCH())
-var message = if comm.rank == 0: "Hello World" else: ""
-message = comm.one2allBroadcast(0, message)
-echo message
-\end{lstlisting}
-
-Notice how before the broadcast, only the process with rank 0 has knowledge of the message. After broadcast, all nodes are aware of it. Also notice that {\ft one2all\_broadcast} is a global communication function, and all processes must call it. Its first argument is the rank of the broadcasting process (0), while the second argument is the message to be broadcasted (only the value from node 0 is actually used).
-
-\goodbreak\subsection{Scatter and collect}\index{scatter}\index{collect}
-
-The all-to-one collect pattern works as follows. Every process sends a value to process {\ft destination}, which receives the values in a list ordered according to the rank of the senders:
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-proc one2allScatter*[T](s: PSim, source: int,
-                        data: seq[T]): seq[T] =
-  if s.rank == source:
-    var h = data.len div s.nprocs
-    if data.len mod s.nprocs != 0: h += 1
-    for i in 0 ..< s.nprocs:
-      s.privateSend(i, data[i * h ..< min(i * h + h, data.len)])
-  result = s.privateRecv(source, seq[T])
-
-proc all2oneCollect*[T](s: PSim, destination: int, value: T): seq[T] =
-  s.privateSend(destination, value)
-  if s.rank == destination:
-    for i in 0 ..< s.nprocs:
-      result.add s.privateRecv(i, T)
-\end{lstlisting}
-
-Here is a revised version of the previous scalar product example using scatter:
-
-%%% META:FILE:psim_scalar2.nim
-\begin{lstlisting}[caption={in file: {\ft psim\_scalar2.nim}}]
-import psim, std/random
-
-proc scalarProductTest2(n, p: int) =
-  let comm = newPSim(p)
-  var a, b: seq[float]
-  if comm.rank == 0:
-    randomize()
-    for _ in 0 ..< n: a.add rand(1.0)
-    for _ in 0 ..< n: b.add rand(1.0)
-  a = comm.one2allScatter(0, a)
-  b = comm.one2allScatter(0, b)
-  var scalar = 0.0
-  for i in 0 ..< a.len: scalar += a[i] * b[i]
-  scalar = comm.all2oneReduce(0, scalar,
-                               proc(x, y: float): float = x + y)
-  if comm.rank == 0: echo scalar
-
-scalarProductTest2(10, 2)
-\end{lstlisting}
-
-\goodbreak\subsection{Reduce}\index{reduce}
-
-The all-to-one reduce pattern is very similar to the collect, except that the {\ft destination} does not receive the entire list of values but some aggregated information about the values. The aggregation must be performed using a commutative binary function $f(x, y)=f(y, x)$. This guarantees that the reduction from the values go down in any order and thus are optimized for different network topologies.
-
-The all-to-all reduce is similar to reduce, but every process will get the result of the reduction, not just one {\ft destination} node. This may be achieved by an all-to-one reduce followed by a one-to-all broadcast:
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-proc all2oneReduce*[T](s: PSim, destination: int, value: T,
-                       op: proc(a, b: T): T): T =
-  s.privateSend(destination, value)
-  if s.rank == destination:
-    result = s.privateRecv(0, T)
-    for i in 1 ..< s.nprocs:
-      result = op(result, s.privateRecv(i, T))
-
-proc all2allReduce*[T](s: PSim, value: T,
-                       op: proc(a, b: T): T): T =
-  result = s.all2oneReduce(0, value, op)
-  result = s.one2allBroadcast(0, result)
-\end{lstlisting}
-
-And here are some examples of a reduce operation that can be passed to the {\ft op} argument of the {\ft all2one\_reduce} and {\ft all2all\_reduce} methods:
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-proc psumOp*[T](x, y: T): T = x + y
-proc pmulOp*[T](x, y: T): T = x * y
-proc pmaxOp*[T](x, y: T): T = (if x > y: x else: y)
-proc pminOp*[T](x, y: T): T = (if x < y: x else: y)
-\end{lstlisting}
-
-Graph algorithms can also be parallelized, for example, the Prim algorithm. One way to do it is to represent the graph using an adjacency matrix where term $i, j$ corresponds to the link between vertex $i$ and vertex $j$. The term can be {\ft None} if the link does not exist. Any graph algorithm, in some order, loops over the vertices and over the neighbors. This step can be parallelized by assigning different columns of the adjacency matrix to different computing processes. Each process only loops over some of the neighbors of the vertex being processed. Here is an example of the Prim algorithm:
-
-%%% META:FILE:psim_prim.nim
-\begin{lstlisting}[caption={in file: {\ft psim\_prim.nim}}]
-import psim, std/random, std/sequtils
-
-proc randomAdjacencyMatrix(n: int): seq[seq[int]] =
-  result = newSeqWith(n, newSeq[int](n))
-  for r in 0 ..< n:
-    for c in 0 ..< r:
-      let v = rand(1 .. 100)
-      result[r][c] = v
-      result[c][r] = v
-
-type
-  Vertex = object
-    path: seq[int]
-
-proc weight(path: seq[int], adjacency: seq[seq[int]]): int =
-  for i in 1 ..< path.len:
-    result += adjacency[path[i-1]][path[i]]
-
-proc bb(adjacency: seq[seq[int]], p = 1): (seq[int], int) =
-  let n = adjacency.len
-  let comm = newPSim(p)
-  var Q: seq[Vertex] = @[Vertex(path: @[0])]
-  var bound = high(int)
-  var optimal: seq[int] = @[]
-  let localVertices = comm.one2allScatter(0, toSeq(0 ..< n))
-  while true:
-    var vertex: Vertex
-    var sentinel = false
-    if comm.rank == 0:
-      if Q.len == 0:
-        sentinel = true
-      else:
-        vertex = Q.pop()
-    sentinel = comm.one2allBroadcast(0, sentinel)
-    if sentinel: break
-    vertex = comm.one2allBroadcast(0, vertex)
-    var P: seq[Vertex] = @[]
-    for k in localVertices:
-      if k notin vertex.path:
-        var newPath = vertex.path & k
-        var newPathLength = weight(newPath, adjacency)
-        if newPathLength < bound:
-          if newPath.len == n:
-            newPath.add newPath[0]
-            newPathLength = weight(newPath, adjacency)
-            if newPathLength < bound:
-              bound = newPathLength
-              optimal = newPath
-          else:
-            P.add Vertex(path: newPath)
-        echo newPath, " ", newPathLength
-    let x = comm.all2allReduce((bound, optimal),
-              proc(a, b: (int, seq[int])): (int, seq[int]) =
-                if a[0] < b[0]: a else: b)
-    bound = x[0]
-    optimal = x[1]
-    let collected = comm.all2oneCollect(0, P)
-    if comm.rank == 0:
-      for batch in collected:
-        for v in batch: Q.add v
-  (optimal, bound)
-
-let m = randomAdjacencyMatrix(5)
-echo bb(m, p = 2)
-\end{lstlisting}
-
-\goodbreak\subsection{Barrier}\index{barrier}
-
-Another global communication pattern is the barrier. It forces all processes when they reach the barrier to stop and wait until all the other processes have reached the barrier. Think of runners gathering at the  starting line  of a race; when  all the runners are there, the race can start.
-
-Here we implement it using a simple all-to-all broadcast:
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-proc barrier*(s: PSim) =
-  discard s.all2allBroadcast(0)
-\end{lstlisting}
-
-The use of {\ft barrier} is usually a symptom of bad code because it forces parallel processes to wait for other processes without data actually being transferred.
-
-\goodbreak\subsection{Global running times}
-
-In the following table, we compute the order of growth or typical running times for the most common network topologies for typical communication algorithms:
-
-\begin{tabular}{|l|lll|} \hline
-Network & Send/Recv & One2All Bcast & Scatter \\ \hline
-completely connected & $1$ & $1$ & $1$ \\
-switch  & $2$ & $\log p$ & $2p$ \\
-1D mesh  & $p-1$ & $p-1$ & $p^2$ \\
-2D mesh  & $2(p^{\frac12}-1)$ & $\sqrt{p}$ & $p^2$ \\
-3D mesh  & $3(p^{\frac13}-1)$ & $p^{1/3}$ & $p^2$ \\
-1D torus  & $p/2$ & $p/2$ & $p^2$ \\
-2D torus  & $2p^{\frac12}$ & $\sqrt{p}/2$ & $p^2$ \\
-3D torus  & $3/2 p^{\frac13}$ & $p^{1/3}/2$ & $p^2$ \\
-hypercube  & $\log p$ & $\log_2 p$ & $p$ \\
-tree  & $\log p$ & $\log p$ & $p$
-\\ \hline
-\end{tabular}
-
-It is obvious that the completely connected is the fastest network but also the most expensive to build. The tree is a cheap compromise. The switch tends to be faster for arbitrary point-to-point communication, but the switch comes to a premium. Multidimensional meshes and toruses become cost-effective when solving problems that are naturally defined on a grid because they only require next neighbor interaction.
-
-\goodbreak\section{Master-Worker and Map-Reduce}\index{map-reduce}\index{master}\index{worker}\index{asynchat}\index{asyncore}
-
-Map-Reduce~\cite{mapreduce} is a framework for processing highly distributable problems across huge data sets using a large number of computers (nodes). The group of computers is collectively referred to as a cluster (if all nodes use the same hardware) or a grid (if the nodes use different hardware). It comprises two steps:
-
-``Map'' (implemented here in a function {\ft mapfn}): The master node takes the input data, partitions it into smaller subproblems, and distributes individual pieces of the data to worker nodes. A worker node may do this again in turn, leading to a multilevel tree structure. The worker node processes the smaller problem, computes a result, and passes that result back to its master node.
-
-``Reduce'' (implemented here in a function {\ft reducefn}): The master node collects the partial results from all the subproblems and combines them in some way to compute the answer to the problem it needs.
-
-Map-Reduce allows for distributed processing of the map and reduction operations. Provided each mapping operation is independent of the others, all maps can be performed in parallel---though in practice, it is limited by the number of independent data sources and/or the number of CPUs near each source. Similarly, a set of ``reducers'' can perform the reduction phase, provided all outputs of the map operation that share the same key are presented to the same reducer at the same time.
-
-While this process can often appear inefficient compared to algorithms that are more sequential, Map-Reduce can be applied to significantly larger data sets than ``commodity'' servers can handle---a large server farm can use Map-Reduce to sort a petabyte of data in only a few hours, which would require much longer in a monolithic or single process system.
-
-Parallelism also offers some possibility of recovering from partial failure of servers or storage during the operation: if one mapper or reducer fails, the work can be rescheduled---assuming the input data are still available.
-
-Map-Reduce comprises two main functions: {\ft mapfn} and {\ft reducefn}. {\ft mapfn} takes a (key, value) pair of data with a type in one data domain and returns a list of (key, value) pairs in a different domain:
-\begin{equation}
-\textrm{mapfn}(k1, v1) \rightarrow (k2, v2)
-\end{equation}
-The {\ft mapfn} function is applied in parallel to every item in the input data set. This produces a list of (k2, v2) pairs for each call. After that, the Map-Reduce framework collects all pairs with the same key from all lists and groups them together, thus creating one group for each one of the different generated keys.
-The {\ft reducefn} function is then applied in parallel to each group, which in turn produces a collection of values in the same domain:
-\begin{equation}
-\textrm{reducefn}(k2, [\textrm{list of }v2]) \rightarrow (k2, v3)
-\end{equation}
-The values returned by {\ft reducefn} are then collected into a single list. Each call to {\ft reducefn} can produce one, none, or multiple partial results.
-Thus the Map-Reduce framework transforms a list of (key, value) pairs into a list of values.
-It is necessary but not sufficient to have implementations of the map and reduce abstractions to implement Map-Reduce. Distributed implementations of Map-Reduce require a means of connecting the processes performing the {\ft mapfn} and {\ft reducefn} phases.
-
-Here is a nonparallel implementation that explains the data workflow better:
-
-%%% META:FILE:mapreduce.nim
-\begin{lstlisting}[caption={in file: {\ft mapreduce.nim}}]
-import std/tables
-
-proc mapreduce*[T, K, V, R](
-    mapper: proc(item: T): (K, V),
-    reducer: proc(key: K, values: seq[V]): R,
-    data: seq[T]): Table[K, R] =
-  var partials = initTable[K, seq[V]]()
-  for item in data:
-    let (key, value) = mapper(item)
-    if key notin partials:
-      partials[key] = @[value]
-    else:
-      partials[key].add value
-  for key, values in partials:
-    result[key] = reducer(key, values)
-\end{lstlisting}
-
-And here is an example we can use to find how many random DNA strings contain the subsequence ``ACTA'':
-
-\begin{lstlisting}
-import std/[random, strutils]
-randomize()
-let bases = "ATGC"
-var strings: seq[string]
-for _ in 0 ..< 100:
-  var s = ""
-  for _ in 0 ..< 10: s.add bases[rand(bases.len - 1)]
-  strings.add s
-
-proc mapfn(s: string): (bool, int) = (("ACCA" in s), 1)
-proc reducefn(check: bool, values: seq[int]): int = values.len
-echo mapreduce(mapfn, reducefn, strings)
-# {false: ..., true: ...}
-\end{lstlisting}
-
-The important thing about the preceding code is that there are two loops in Map-Reduce. Each loop consists of executing tasks (map tasks and reduce tasks) which are independent from each other (all the maps are independent, all the reduce are independent, but the reduce depend on the maps). Because they are independent, they can be executed in parallel and by different processes.
-
-For a real distributed map-reduce, the worker pool model usually relies on asynchronous sockets so that neither workers nor the master is ever in a wait state. The code is event-based: communication only happens when a socket connecting the master to a worker is ready for a write (task assignment) or a read (task completed). Such a system is also fail-safe because if a worker closes the connection prematurely, the task is reassigned to another worker.
-
-In Nim, a comparable runtime can be built with {\ft std/asyncnet} (event-driven sockets) and {\ft std/asyncdispatch} (cooperative scheduling); the {\ft mapreduce} routine above already captures the algorithmic core. For multi-machine deployments, mature systems such as Hadoop (accessed via Nim's C/JNI interop) or any MPI implementation are available.
-
 
 \chapter{Appendices}
 
