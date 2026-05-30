@@ -371,7 +371,7 @@ let mask: uint32 = 0x9d2c5680'u32
 echo a div 2           # integer division: 3
 echo a mod 2           # remainder: 1
 echo a / 2             # float division: 3.5
-echo 2.0 ^ 10          # 1024.0 (power)
+echo 2.0 ^ 10          # 1024.0 (power); import std/math for this operator
 echo not true          # false
 \end{lstlisting}
 
@@ -581,7 +581,7 @@ proc square(x: float): float =
 echo square(3.0)             # 9.0
 \end{lstlisting}
 
-Inside any procedure, the special variable {\ft result} is automatically declared, initialized to its zero value, and returned at the end. This is useful when a result is built up incrementally.
+Inside any procedure, the special variable {\ft result} is automatically declared, initialized to its zero value, and returned at the end. This is useful when a result is built up incrementally. Depending on the Nim version and compiler flags, however, an explicit initialization may be enforced.
 
 \begin{lstlisting}
 proc factorial(n: int): int =
@@ -664,7 +664,7 @@ echo maxOf(@[3, 1, 4, 1, 5, 9, 2, 6])
 echo maxOf(@["apple", "kiwi", "pear"])
 \end{lstlisting}
 
-The {\ft var T} marker on an argument means the procedure can mutate it; without {\ft var}, arguments are passed by value (or by reference for {\ft ref} types) and cannot be reassigned inside the procedure.
+The {\ft var T} marker on an argument means the procedure can mutate it; without {\ft var}, arguments are passed by value and cannot be reassigned inside the procedure. However, we often use {\ft ref} types for arguments, which are pointers, so they still allow for mutations, but not for rebindings.
 
 \goodbreak\subsection{First-class procedures and closures}
 
@@ -785,7 +785,7 @@ let s = Stamp(id: 1, label: "A")     # ref constructor (allocates)
 echo p.y, " ", s.label
 \end{lstlisting}
 
-Most data structures in this book ({\ft Matrix}, {\ft DisjointSets}, {\ft NeuralNetwork}, {\ft MCEngine}, ...) are {\ft ref object}s because we want them to be passed by reference and mutated in place.
+Most data structures in this book ({\ft Matrix}, {\ft DisjointSets}, {\ft NeuralNetwork}, {\ft MCEngine}, ...) are {\ft ref object}s because we want them to be passed by reference and mutated in place. This is in contrasts to modern Nim style prefers to use value types and move semantics instead of {\ft ref object}s, but our style makes Nim easier to use for beginners, especially those coming from Python.
 
 A common pattern is to provide a {\ft newX} constructor procedure:
 
@@ -1023,7 +1023,7 @@ Algorithms also make use of arithmetic expressions, logical expressions ({\ft no
 The issues that concern us when developing and analyzing algorithms are the following:
 
 \begin{enumerate}
-\item  Correctness: of the problem specification, of the proposed algorithm, 
+\item  Correctness: of the problem specification, of the proposed algorithm,
 and of its implementation in some programming language (we will not worry
 about the third one; program verification is another subject altogether)
 
@@ -1577,7 +1577,7 @@ problems, that is, problems that require the minimization or maximization of
 some measure. One disadvantage of using divide-and-conquer is that the
 process of recursively solving separate sub-instances can result in the same
 computations being performed repeatedly because identical sub-instances may
-arise. For example, if you are computing the path between two nodes in a graph, 
+arise. For example, if you are computing the path between two nodes in a graph,
 some portions of multiple paths will follow the same last few hops. Why compute
 the last few hops for every path when you would get the same result every time?
 
@@ -1619,7 +1619,7 @@ T_{memory} &\in &\Theta (1)
 
 {\bf Greedy algorithms}
 \index{greedy algorithms} work in phases. In each phase, a decision is made
-that appears to be good, without regard for future consequences. Generally, 
+that appears to be good, without regard for future consequences. Generally,
 this means that some local optimum is chosen. This ``take what you can get
 now'' strategy is the source of the name for this class of algorithms. When
 the algorithm terminates, we hope that the local optimum is equal to the
@@ -2205,7 +2205,6 @@ echo root[3]            # "bbb"
 echo root.max()         # (8, "ccc")
 \end{lstlisting}
 
-Notice that an empty tree is treated as an exception, where {\ft key = None}.
 
 \goodbreak\subsection{Other types of trees}
 
@@ -2383,7 +2382,7 @@ proc depthFirstSearch*[V](
   result = blacknodes
 \end{lstlisting}
 
-Notice that the BFS and the DFS differ by a single line, which determines whether graynodes is a queue (BSF) or a stack (DFS). When graynodes is a queue, the first vertex discovered is the first visited. When it is a stack, the last vertex discovered is the first visited.
+Notice that the BFS and the DFS differ by a single line (line 13 in the listings above), which determines whether graynodes is a queue (BSF) or a stack (DFS). When graynodes is a queue, the first vertex discovered is the first visited. When it is a stack, the last vertex discovered is the first visited.
 
 The DFS algorithm goes as follows:
 \begin{eqnarray}
@@ -2438,7 +2437,7 @@ proc joined*(d: DisjointSets, i, j: int): bool =
 proc len*(d: DisjointSets): int = d.counter
 \end{lstlisting}
 
-Notice that we added a member variable counter that is initialized to the number of disjoint sets and is decreased by one every time two sets are merged. This allows us to keep track of how many disjoint sets exist at each time. We also override the {\ft \_\_len\_\_} operator so that we can check the value of the counter using the {\ft len} function on a {\ft DisjointSet}.
+Notice that we added a member variable counter that is initialized to the number of disjoint sets and is decreased by one every time two sets are merged. This allows us to keep track of how many disjoint sets exist at each time. We also added a {\ft len} procedure so that we can check the value of the counter on a {\ft DisjointSet}.
 
 As an example of application, here is a code that builds a $n^d$ maze. It may be easier to picture it with $d=2$, a two-dimensional maze. The algorithm works by assuming there is a wall connecting any couple of two adjacent cells. It labels the cells using an integer index.
 It puts all the cells into a {\ft DisjointSets} data structure and then keeps tearing down walls at random. Two cells on the maze belong to the same set if they are connected, for example, if there is a path that connects them. At the beginning, each cell is its own set because it is isolated by walls.
@@ -2609,6 +2608,8 @@ The Dijkstra~\cite{dijkstra} algorithm solves a similar problem to the Kruskal a
 It works, like Prim, by placing all vertices in a min priority queue where the queue metric for each vertex is the length of the path connecting the vertex to the source. At each iteration, the algorithm pops a vertex from the priority queue, loops over its neighbors (adjacent links), and, if it finds that one of its neighbors is already in the queue and it is possible to connect it to the current vertex using a link that makes the path to the source shorter, the neighbor information is updated. The algorithm loops until there are no more vertices in the priority queue.
 
 The implementation of this algorithm is almost identical to the Prim algorithm, except for two lines:
+
+% XXX Which two lines?
 
 %%% META:FILE:nlib/graph.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/graph.nim}}]
@@ -2881,7 +2882,7 @@ either one of the strings or remove the letter from both strings.
 
 Finally, observe that once we"ve decided what to do with the first
 characters of the strings, the remaining subproblem is again a LCS problem on two shorter strings. Therefore we can solve
-it recursively. However, because we don"t know which choice of the three to take, 
+it recursively. However, because we don"t know which choice of the three to take,
 we will take them all and see which choice returns the best result.
 
 Rather than finding the subsequence itself, it turns out to be more
@@ -3047,14 +3048,14 @@ problem but $x_i\in \{0, 1\}$ (can only be 0 or 1).
 
 Consider the jars of liquids replaced with baskets of objects, say, a basket each of gold bars, silver coins, copper beads, and Rolex watches.  How many of each item do you take?  The discrete knapsack problem does not consider ``baskets of items'' but rather all the items together.  In this example, dump out all the baskets and you have individual objects to take.  Which objects do you take, and which do you leave behind?
 
-In this case, a greedy approach does not apply and the problem is, in general, 
+In this case, a greedy approach does not apply and the problem is, in general,
 NP complete. This concept is defined formally later but it means that there is no known algorithm that can solve this problem and that its order of growth is a polynomial. The best known algorithm has an exponential running time.
 
 This kind of problem is unsolvable for large input.
 
 If we assume that $c$ and $b_i$ are all multiples of a finite factor $\varepsilon$, then it is possible to solve the problem in $O(c/\varepsilon )$.
-Even when there is not a finite factor $\varepsilon$, 
-we can always round $c$ and $b_i$ to some finite precision $\varepsilon$, 
+Even when there is not a finite factor $\varepsilon$,
+we can always round $c$ and $b_i$ to some finite precision $\varepsilon$,
 and we can conclude that, for any finite precision $\varepsilon$, we can
 solve the problem in linear time. The algorithm that solves this problem
 follows a dynamic programming approach.
@@ -3111,7 +3112,7 @@ be computationally feasible.
 inefficiency.
 
 \item  Information about previously investigated combinations is not used to
-eliminate inferior or infeasible combinations (unless we use memoization, 
+eliminate inferior or infeasible combinations (unless we use memoization,
 but in this case the algorithm would grow polynomially in memory space).
 \end{itemize}
 
@@ -3167,7 +3168,7 @@ $k$ & $c[2, j]$ & $f[0, k-c[0, j]]$ & $f[1, k]$ \\ \hline
 
 STAGE THREE: we maximize the return of investment considering offers from
 firm $2$ and the preceding table. We fill a table $f[2, k]$ with the maximum
-return of investment if we invest $k$ million dollars in firm $0$, firm $1$, 
+return of investment if we invest $k$ million dollars in firm $0$, firm $1$,
 and firm $2$:
 \begin{equation}
 f[2, k]=\max_{j|c[2, j]<k}r[2, j]+f[1, k-c[1, j]]  \label{stage2}
@@ -3713,7 +3714,7 @@ proc next(i: int) =
 next(81621)
 \end{lstlisting}
 
-This code check searches for a number equal or greater than 81621 whose square is comprised of only two digits. 
+This code check searches for a number equal or greater than 81621 whose square is comprised of only two digits.
 Nobody knows whether such number exists, therefore nobody knows if this code stops.
 
 Although one day this problem may be solved, there are many other problems that
@@ -3820,7 +3821,7 @@ And because we interpret $\delta y$ as the width of the distribution $y$, it sho
 \end{equation}
 
 We have used this formula before for the propagated data error.
-For functions of two variables $z = f(x, y)$ and assuming the uncertainties in $x$ and $y$ are independent, 
+For functions of two variables $z = f(x, y)$ and assuming the uncertainties in $x$ and $y$ are independent,
 
 \begin{equation}
   \delta z = \sqrt{\left|\frac{\partial f(x, y)}{\partial x}\right|^2\delta x^2 +
@@ -4341,7 +4342,7 @@ proc genericLoopingFunction(guess: float, ap, rp: float, ns: int): float =
   raise newException(ArithmeticDefect, "no convergence")
 \end{lstlisting}
 
-In the preceding code, 
+In the preceding code,
 \begin{itemize}
 \item {\ft ap} is the target absolute precision.
 \item {\ft rp} is the target relative precision.
@@ -4374,7 +4375,7 @@ In mathematics, a system described by a function $f$ is linear if it is additive
 \begin{equation}
 f(x+y) = f(x) + f(y)
 \end{equation}
-and if it is homogeneous, 
+and if it is homogeneous,
 \begin{equation}
 f(\alpha x) = \alpha f(x)
 \end{equation}
@@ -4478,8 +4479,6 @@ proc newMatrix*(values: seq[float]): Matrix =
 
 Notice that the constructor takes the number of rows and columns (cols) of the matrix but also a {\ft fill} value, which can be used to initialize the matrix elements and defaults to zero. It can be callable in case we need to initialize the matrix with row, col dependent values.
 
-The actual matrix elements are stored as a list or array into the {\ft data} member variable. If {\ft optimize=True}, the data are stored in an {\ft array} of double precision floating point numbers (``d''). This optimization will prevent you from building matrices of complex numbers or matrices of arbitrary precision decimal numbers.
-
 Now we define a getter method, a setter method, and a string representation for the matrix elements:
 \index{\_\_getitem\_\_}\index{\_\_setitem\_\_}
 
@@ -4516,7 +4515,7 @@ proc swapRows*(a: Matrix, i, j: int) =
 
 \index{matrix!identity}\index{matrix!diagonal}
 
-We also define some convenience functions for constructing the identity matrix (given its size) and a diagonal matrix (given the diagonal elements). We make these methods static because they do not act on an existing matrix.
+We also define some convenience functions for constructing the identity matrix (given its size) and a diagonal matrix (given the diagonal elements).
 
 %%% META:FILE:nlib/matrix.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/matrix.nim}}]
@@ -4584,7 +4583,7 @@ For complex matrices we would parameterize {\ft Matrix} on a numeric type {\ft T
 
 
 \index{matrix!multiplication}\index{scalar product}
-Now we implement multiplication. We are interested in three types of multiplication: multiplication of a scalar by a matrix ({\ft \_\_rmul\_\_}), multiplication of a matrix by a matrix ({\ft \_\_mul\_\_}), and scalar product between two vectors (also handled by {\ft \_\_mul\_\_}):
+Now we implement multiplication. We are interested in three types of multiplication: multiplication of a scalar by a matrix, multiplication of a matrix by a matrix, and scalar product between two vectors:
 
 %%% META:FILE:nlib/matrix.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/matrix.nim}}]
@@ -4707,7 +4706,7 @@ The trick of the Gauss--Jordan elimination consists in finding a series of matri
 \begin{equation}
 S_{n-1} ... S_1 S_0 A \mathbf{x} = S_{n-1} ... S_1 S_0 B \mathbf{b} = \mathbf{x}
 \end{equation}
-Because the preceding expression must be true for every $b$ and because $x$ is the solution of $A x=b$, by definition, 
+Because the preceding expression must be true for every $b$ and because $x$ is the solution of $A x=b$, by definition,
 $S_{n-1} \ldots S_1 S_0 B \equiv A^{-1}$.
 
 The Gauss-Jordan algorithm works exactly this way: given $A$, it computes $A^{-1}$:
@@ -5077,7 +5076,7 @@ for v in randomList(A):
   echo v
 \end{lstlisting}
 
-The {\ft RandomList} is a generator. You can iterate over it. The {\ft yield} keyword is used like {\ft return}, except the function will return a generator.
+The {\ft randomList} is a Nim iterator. The {\ft yield} keyword is comparable to {\ft return}. For more information on iterators, consult a Nim language guide.
 
 \goodbreak\subsection{Modern portfolio theory}
 
@@ -5296,7 +5295,7 @@ let QUARTIC*   = polynomial(4)
 
 As an example, we can use it to perform a polynomial fit: given a set of points, we want to find the coefficients of a polynomial that best approximate those points.
 
-In other words, we want to find the $c_i$ such that, given $t_j$ and $o_j$, 
+In other words, we want to find the $c_i$ such that, given $t_j$ and $o_j$,
 \begin{eqnarray}
 c_0  + c_1 t_0^{1} + c_2 t_0^{2} +  ... & = & e_0 \simeq o_0 \pm do_0 \\
 c_0  + c_1 t_1^{1} + c_2 t_1^{2} +  ... & = & e_1 \simeq o_1 \pm do_1\\
@@ -5454,7 +5453,7 @@ x_i =
 \left(\begin{tabular}{ccc}
 1 & -2  \\
 1 & 4  \\
-\end{tabular}\right) * 
+\end{tabular}\right) *
 \left(\begin{tabular}{c}
 -1 \\
 1 \\
@@ -6380,7 +6379,7 @@ echo solveNewtonMulti(f, @[0.0, 0.0])
 
 \index{Newton optimizer!multi-dimensional}
 
-As for the one-dimensional case, we can approximate $f(\mathbf{x})$ with its Taylor expansion at the first order, 
+As for the one-dimensional case, we can approximate $f(\mathbf{x})$ with its Taylor expansion at the first order,
 \begin{equation}
 f(\mathbf{x}) = f(\mathbf{\bar x}) + \nabla_f(\mathbf{\bar x})(\mathbf{x}-\mathbf{\bar x}) +
 \frac12 (\mathbf{x}-\mathbf{\bar x})^t H_f(\mathbf{\bar x})(\mathbf{x}-\mathbf{\bar x})
@@ -6753,7 +6752,7 @@ From now on, we will omit the $f$ subscript in $\mathbf{u}$ and simply use diffe
 
 Because we are interested in numerical algorithms, we will keep $N$ finite and work with the sum instead of the integral.
 
-Given a fixed $N$, we can always find $N$ vectors $\mathbf{b}_0, \mathbf{b}_1...\mathbf{b}_{N_1}$ that are linearly independent, normalized, and orthogonal, that is, 
+Given a fixed $N$, we can always find $N$ vectors $\mathbf{b}_0, \mathbf{b}_1...\mathbf{b}_{N_1}$ that are linearly independent, normalized, and orthogonal, that is,
 
 \begin{equation}
 \mathbf{b}_i \cdot \mathbf{b}_j = \sum_k b_{ik} b_{ik} = \delta_{ij}
@@ -7044,14 +7043,14 @@ uncertainty).
 There are three standard ways to define probability:
 
 \begin{itemize}
-\item  (frequentist) Given an experiment and a set of possible outcomes $S$, 
+\item  (frequentist) Given an experiment and a set of possible outcomes $S$,
 the probability of an event $A\subset S$ is computed by repeating the
 experiment $N$ times, counting how many times the event $A$ is realized, $N_A
 $, then taking the limit
 \begin{equation}
 \textrm{Prob}(A)\equiv \lim_{N\rightarrow \infty }\frac{N_A}N
 \end{equation}
-This definition actually requires that one performs an experiment, 
+This definition actually requires that one performs an experiment,
 if not an infinite, then a number of times.
 
 \item  (a priori) Given an experiment and a set of possible outcomes $S$
@@ -7090,7 +7089,7 @@ of a dice, each possible number (from 1 to 6) is an event and is also an
 atomic event. The event of getting an even number is an event but not an
 atomic event because it can be realized in three possible ways.
 
-The axiomatic definition makes it easy to prove theorems, for example, 
+The axiomatic definition makes it easy to prove theorems, for example,
 
 {\it If $S=A\cup A^c$ and $A\cap A^c=0$ then $\textrm{Prob}(A)=1-\textrm{Prob}(A^c)$}
 
@@ -7281,7 +7280,7 @@ We call $E[(X-\mu _X)^2]$ the {\bf variance} of $X$ and denote it with $%
 \sigma _X^2=E[X^2]-E[X]^2
 \end{equation}
 
-By definition, 
+By definition,
 \begin{equation}
 F(\infty )\equiv \textrm{Prob}(X\leq \infty )=1
 \end{equation}
@@ -7291,7 +7290,7 @@ therefore
 \end{equation}
 The distribution $p$ is always normalized to 1.
 
-Moreover, 
+Moreover,
 
 \begin{eqnarray}
 E[aX+b] &=&\int_{-\infty }^\infty (ax+b)p(x)dx \\
@@ -7313,7 +7312,7 @@ We can also compute the same integral by using the definition of expectation val
   E[f] = \sum_{x_i} f(x_i) p(x_i) = \frac1N \sum_{x_i} f(x_i)
 \end{equation}
 
-where $x_i$ are $N$ random points drawn from the uniform distribution $p$ defined earlier. In fact, in the large $N$ limit, 
+where $x_i$ are $N$ random points drawn from the uniform distribution $p$ defined earlier. In fact, in the large $N$ limit,
 
 \begin{equation}
   \lim_{N\rightarrow \infty}  \frac1N \sum_{x_i} f(x_i) = \int_{-\infty }^\infty f(x) p(x)dx = \frac1{b-a}\int_a^b f(x) dx
@@ -7363,7 +7362,7 @@ and if $X$ and $Y$ are independent, then $\textrm{cov}(X, Y)=\textrm{corr}(X, Y)
 
 Notice that the reverse is not true. Even if the correlation and the covariance are zero, $X$ and $Y$ may be dependent.
 
-Moreover, 
+Moreover,
 \begin{eqnarray}
 \textrm{cov}(X, Y) &=&E[(X-\mu _X)(Y-\mu _Y)] \\
 &=&E[(X-\mu _X)(\pm X\mp \mu _X)] \\
@@ -7374,7 +7373,7 @@ Moreover,
 Therefore, if $X$ and $Y$ are completely correlated or anti-correlated ($Y=\pm X$), then $\textrm{cov}(X, Y)=\pm \sigma _X^2$ and $\textrm{corr}(X, Y) = \pm 1$.
 Notice that the correlation lies always in the range $[-1, 1]$.
 
-Finally, notice that for uncorrelated random variables $X_i$, 
+Finally, notice that for uncorrelated random variables $X_i$,
 \begin{eqnarray}
 E[\sum_ia_iX_i] &=&\sum_ia_iE[X_i] \\
 E[(\sum_iX_i)^2] &=&\sum_iE[X_i^2]
@@ -7535,7 +7534,7 @@ m=n$%
 in agreement with case 1.
 \end{itemize}
 
-Here is another example. A club has 20 members and has to elect a president, a vice president, 
+Here is another example. A club has 20 members and has to elect a president, a vice president,
 a secretary, and a treasurer. In how many different ways can they select the
 four officeholders? Think of each office as a socket and each person as a
 plug; therefore the number combination is $20!/(20-4)!\simeq \allowbreak
@@ -7806,7 +7805,7 @@ Notice how the constructor allows us to further randomize the data by contributi
 
 \goodbreak\section{Pseudo-randomness}
 
-In many cases we do not have a physical device to generate random numbers, 
+In many cases we do not have a physical device to generate random numbers,
 and we require a software solution. Software is deterministic, the outcome
 is reproducible, therefore it cannot be used to generate randomness, but it
 can generate pseudo-randomness. The outputs of pseudo random number
@@ -7814,12 +7813,12 @@ generators are not random, yet they may be considered random for practical purpo
 John von Neumann observed in 1951 that ``anyone who
 considers arithmetical methods of producing random digits is, of course, in
 a state of sin.'' (For attempts to generate ``truly random'' numbers, see
-the article on hardware random number generators.) Nevertheless, 
+the article on hardware random number generators.) Nevertheless,
 pseudo random numbers are a critical part of modern computing, from
 cryptography to the Monte Carlo method for simulating physical systems.
 
 Pseudo random numbers are relatively easy to generate with software, and they
-provide a practical alternative to random numbers. For some applications, 
+provide a practical alternative to random numbers. For some applications,
 this is adequate.
 
 
@@ -7955,7 +7954,7 @@ The advantage of this generator is that if $m$ is prime, the period of this
 type of generator can be as big as $m^k-1$. This is much larger than a
 simple multiplicative congruential generator.
 
-An example is $a_1=107374182, $ $a_2=a_3=a_4=0, $ $a_5=104480$, and $m=2^{31}-1$, 
+An example is $a_1=107374182, $ $a_2=a_3=a_4=0, $ $a_5=104480$, and $m=2^{31}-1$,
 where the period is
 \begin{equation}
 (2^{31}-1)^5-1\simeq 4.56\times 10^{46}
@@ -8074,13 +8073,13 @@ same PRNG.
 x_i=(ax_{i-1}^{-1}+c)\textrm{mod}m
 \end{equation}
 
-where $x_{i-1}^{-1}$ is the multiplicative inverse of $x_{i-1}$ modulo $m$, 
+where $x_{i-1}^{-1}$ is the multiplicative inverse of $x_{i-1}$ modulo $m$,
 for example, $x_{i-1}x_{i-1}^{-1}=1\textrm{mod}m$.
 
 
 \goodbreak\subsection{Mersenne twister}
 
-One of the best PRNG algorithms (because of its long period, uniform distribution, and speed) is the Mersenne twister, which produces a 53-bit random number, 
+One of the best PRNG algorithms (because of its long period, uniform distribution, and speed) is the Mersenne twister, which produces a 53-bit random number,
 and it has a period of $2^{19937}-1$ (this number is 6002 digits long!).
 Nim's {\ft std/random} module is built on top of a Mersenne-twister-style generator (specifically Xoshiro/Mersenne, depending on the implementation).
 Although discussing the inner working of this algorithm is beyond the scope of these notes, we provide a
@@ -8170,7 +8169,7 @@ non-overlapping blocks, leapfrogging, and Lehmer trees.
 
 Let"s consider one sequence of pseudo random numbers:
 \begin{equation}
-x_0, x_1, ..., x_k, x_{k+1}, ..., x_{2k}, x_{2k+1}, ..., x_{3k}, x_{3k+1}, ..., 
+x_0, x_1, ..., x_k, x_{k+1}, ..., x_{2k}, x_{2k+1}, ..., x_{3k}, x_{3k+1}, ...,
 \end{equation}
 One can break it into subsequences of $k$ numbers:
 \begin{eqnarray}
@@ -8190,7 +8189,7 @@ x_{nk-1}=a^{nk-1}x_0\textrm{mod}m
 \end{equation}
 if the seed of the arbitrary sequence is $x_{nk}, x_{nk+1}, ..., x_{nk-1}$. This
 is particularly convenient for parallel computers where one computer
-generates the seeds for the subsequences and the processing nodes, 
+generates the seeds for the subsequences and the processing nodes,
 independently, generated the subsequences.
 
 \goodbreak\subsection{Leapfrogging}
@@ -8198,7 +8197,7 @@ independently, generated the subsequences.
 Another and probably more popular technique is leapfrogging.
 Let"s consider one sequence of pseudo random numbers:
 \begin{equation}
-x_0, x_1, ..., x_k, x_{k+1}, ..., x_{2k}, x_{2k+1}, ..., x_{3k}, x_{3k+1}, ..., 
+x_0, x_1, ..., x_k, x_{k+1}, ..., x_{2k}, x_{2k+1}, ..., x_{3k}, x_{3k+1}, ...,
 \end{equation}
 One can break it into subsequences of $k$ numbers:
 \begin{eqnarray}
@@ -8246,7 +8245,7 @@ The Mersenne twister algorithm implemented in {\ft os.random} has leapfrogging b
 
 Lehmer trees are binary trees, generated recursively, where each node
 contains a random number. We start from the root containing the seed, $x_0$, and
-we append two children containing, respectively, 
+we append two children containing, respectively,
 \begin{eqnarray}
 x_i^L &=&(a_Lx_{i-1}+c_L)\textrm{mod}m \\
 x_i^R &=&(a_Rx_{i-1}+c_R)\textrm{mod}m
@@ -8414,7 +8413,7 @@ lookup that runs in $O(\left\lceil \log _2n\right\rceil )$. As the naive
 table lookup is an application of the linear search, the F-Y is an
 application of the binary search.
 
-Let"s assume that $n=2^t$ is an exact power of $2$. If this is not the case, 
+Let"s assume that $n=2^t$ is an exact power of $2$. If this is not the case,
 we can always reduce to this case by adding new values to the lookup table
 corresponding to $0$ probability. The basic data structure behind the F-Y
 method is an array of arrays $a_{ij}$ built according to the following rules:
@@ -8634,7 +8633,7 @@ neighborhood without selling the five candy bars?
 \end{equation}
 \end{itemize}
 
-As with the binomial distribution, we can find an efficient recursive formula for the 
+As with the binomial distribution, we can find an efficient recursive formula for the
 negative binomial distribution:
 
 \begin{eqnarray}
@@ -8733,7 +8732,7 @@ but the limit
 is finite. This limit is $\lambda $.
 
 We can use the same technique adopted for the
-binomial distribution and observe that for Poisson, 
+binomial distribution and observe that for Poisson,
 \begin{eqnarray}
 \textrm{Prob}(X &=&0)=e^{-\lambda } \\
 \textrm{Prob}(X &=&k+1)=\frac{^\lambda }{k+1}\textrm{Prob}(X=k)
@@ -8764,7 +8763,7 @@ larger than machine precision.
 
 \goodbreak\subsection{Uniform in range}
 
-A typical problem is generating random integers in a given range $[a, b]$, 
+A typical problem is generating random integers in a given range $[a, b]$,
 including the extreme. We can map uniform random numbers $y_i\in (0, 1)$
 into integers by using the formula
 \begin{equation}
@@ -8924,7 +8923,7 @@ otherwise it recomputes $this$ and $other$ again.
 
 To map a random Gaussian number $y$ with mean $0$ and standard deviation $1$
 into another Gaussian number $y^{\prime }$ with mean $\mu $ and standard
-deviation $\sigma $, 
+deviation $\sigma $,
 \begin{equation}
 y^{\prime }=\mu +y\sigma
 \end{equation}
@@ -9030,7 +9029,7 @@ proc pointInCircle*(r: RandomSource, radius = 1.0): (float, float) =
 
 A random point $(x, y, z)$ uniformly distributed on a sphere of radius 1 is
 obtained by generating three uniform random numbers $u_1, u_2, u_3, $; compute $%
-v_i=2u_i-1$, and if $v_1^2+v_2^2+v_3^2\leq 1$, 
+v_i=2u_i-1$, and if $v_1^2+v_2^2+v_3^2\leq 1$,
 \begin{eqnarray}
 x &=&v_1/\sqrt{v_1^2+v_2^2+v_3^2} \\
 y &=&v_2/\sqrt{v_1^2+v_2^2+v_3^2} \\
@@ -9139,7 +9138,7 @@ Note that
 of the numbers generated by the random number generator
 \end{itemize}
 
-As an experiment, we can do the same binning on a larger number of events, 
+As an experiment, we can do the same binning on a larger number of events,
 \begin{lstlisting}
 >>> test_bin(100000)
 \end{lstlisting}
@@ -9227,7 +9226,7 @@ which produces the following output:
 999 3.14..
 \end{lstlisting}
 
-A better formula is due to Plauffe, 
+A better formula is due to Plauffe,
 
 \begin{equation}
 \pi = \sum_{i=0} \frac{1}{16^i} \left(
@@ -9324,11 +9323,11 @@ daily income of the merchant?
 This problem cannot easily be formulated analytically or reduced to
 the computation of an integral, but it can easily be simulated.
 
-In particular, we simulate many days and, for each day $i$, 
+In particular, we simulate many days and, for each day $i$,
 we start with $N$ items
 in stock, and we loop over each simulated visitor. If the visitor
 finds an item in stock, he buys it with a 5\% probability
-(producing an income of \$70), whereas if the item is not in stock, 
+(producing an income of \$70), whereas if the item is not in stock,
  he buys it with 2\% probability (producing an income of \$100).
 At the end of each day, we pay \$30 for each item remaining in stock.
 
@@ -9967,7 +9966,7 @@ echo s.simulateMany()
 \index{Markov process}
 \index{Wiener process}
 
-A {\it stochastic process}~\cite{stochastic} is a random function, 
+A {\it stochastic process}~\cite{stochastic} is a random function,
 for example, a function that maps a
 variable $n$ with domain $D$ into $X_n$, where $X_n$ is a random variable
 with domain $R$. In practical applications, the domain $D$ over which the
@@ -9976,12 +9975,12 @@ function is defined can be a time interval (and the stochastic is called a
 called a {\it random field}). Familiar examples of time series include {\it %
 random walks}~\cite{rwalk}; stock market and exchange rate fluctuations; signals such as
 speech, audio, and video; or medical data such as a patient"s EKG, EEG, blood
-pressure, or temperature. Examples of random fields include static images, 
+pressure, or temperature. Examples of random fields include static images,
 random topographies (landscapes), or composition variations of an
 inhomogeneous material.
 
 Let"s consider a grasshopper moving on a straight line, and let $X_n$ be the
-position of the grasshopper at time $t=n\Delta _t$. Let"s also assume that at time 0, 
+position of the grasshopper at time $t=n\Delta _t$. Let"s also assume that at time 0,
 $X_0=0$. The position of the grasshopper at each future ($t>0$) time is unknown.
 Therefore it is a random variable.
 
@@ -10177,7 +10176,7 @@ C_{put}=e^{-r\tau }\sum_{i=0}^{n}\binom nip^i(1-p)^{n-i}\max
 \end{equation}
 
 The parameters of this model are $u, d$ and $p$, and they must be determined
-from historical data. For example, 
+from historical data. For example,
 
 \begin{eqnarray}
 p &=& \frac{e^{r\Delta_t} - d}{u-d} \\
@@ -10206,7 +10205,7 @@ dividends or we want to include some other variable in the model.
 
 This method works fine for European call options, but the method is not easy to
 generalize to other options, when it depends on the path of
-the asset (e.g., the asset is a stock that pays dividends). Moreover, 
+the asset (e.g., the asset is a stock that pays dividends). Moreover,
 to increase precision, one has to decrease $\Delta _t$ or redo the
 computation from the beginning.
 
@@ -10395,7 +10394,7 @@ p({\bf x})=p(x_0, x_1, ..., x_{n-1})
 \end{equation}
 cannot be factored, as in $p(x_0, x_1, ..., x_{n-1})=p(x_0)p(x_1)...p(x_{n-1})$. Consider for example the simple case of generating two random numbers $x_0$
 and $x_1$ both in $[0, 1]$ with probability mass function $%
-p(x_0, x_1)=6(x_0-x_1)^2$ (note that $\int_0^1\int_0^16p(x_0, x_1)dx_0dx_1=1$, 
+p(x_0, x_1)=6(x_0-x_1)^2$ (note that $\int_0^1\int_0^16p(x_0, x_1)dx_0dx_1=1$,
 as it should be).
 
 In the case where each of the $x_i$ has a Gaussian distribution and the only dependence between $x_i$ and $x_j$ is their correlation, the solution was already examined in a previous section about the Cholesky algorithm. Here we examine the most general case.
@@ -11186,13 +11185,13 @@ $a<b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive)
 \item
 $a>b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive)
 \item
-$a=b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive, 
+$a=b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive,
 symmetric and reflexive)
 \item
-$a\leq b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive, 
+$a\leq b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive,
 and reflexive)
 \item
-$a\geq b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive, 
+$a\geq b$ for $a\in {\cal A}$ and $b\in {\cal B}$ is a relation (transitive,
 and reflexive)
 \item  A relation $R$ that is transitive, symmetric and reflexive is called
 an {\bf equivalence relation} and is often indicated with the notation $a\sim b$.
