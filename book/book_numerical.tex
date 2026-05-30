@@ -2,7 +2,7 @@
 
 %
 % TODO:
-% - add imlementation of fit() and .predict()
+% - add implementation of fit() and .predict()
 % - add event loop example
 % - add sparse matrix example
 % - rewrite Matrix
@@ -178,7 +178,7 @@ Build Date: \today
 
 \goodbreak\chapter{Introduction}
 
-This is a port to Nim of a previous edition of this book from the same author. The original version of this book was in Python and was titled ``Annotated Algorithms in Python''. It was assembled from lectures given by the author over a period of 10 years at the School of Computing of DePaul University. The lectures cover multiple classes, including Analysis and Design of Algorithms, Scientific Computing, Monte Carlo Simulations, and Parallel Algorithms. These lectures teach the core knowledge required by any scientist interested in numerical algorithms and by students interested in computational finance.
+This is a port to the Nim language of a previous edition of this book from the same author. The original version of this book was in Python and was titled ``Annotated Algorithms in Python''. It was assembled from lectures given by the author over a period of 10 years at the School of Computing of DePaul University. The lectures cover multiple classes, including Analysis and Design of Algorithms, Scientific Computing, Monte Carlo Simulations, and Parallel Algorithms. These lectures teach the core knowledge required by any scientist interested in numerical algorithms and by students interested in computational finance.
 
 We chose Nim because its syntax closely resembles that of Python, making the transition from the original edition natural for readers already familiar with Python, while at the same time Nim is as fast as the C language. This combination makes Nim a good choice for the development of scientific applications that does not compromise on performance. Over time the author has started to appreciate and love the syntax of Nim, its build speed, and its running speed.
 
@@ -278,9 +278,13 @@ All the code included in these notes is released by the author under the three-c
 
 \section * {Acknowledgements}
 
-Many thanks to Alan Etkins, Brian Fox, Dan Bowker, Ethan Sudman, Holly Monteith, Konstantinos Moutselos, Luca De Alfaro, Michael Gheith, Paula Mikrut, Sean Neilan, and John Plamondon for reviewing different editions of this book. We also thank all the students of our classes for their useful comments and suggestions. Finally, we thank Wikipedia, from which we borrowed a few ideas and examples.
+First and foremost many thanks to Andreas Rumpf who invented the beautiful Nim language and took the time to personally review this manuscript.
 
-We also wish to thank Claude by Anthropic for significant help in reviewing this manuscript, including catching technical inaccuracies, clarifying explanations, and suggesting improvements throughout the text.
+Thanks to the many people who helped review the original Python version of this book: Alan Etkins, Brian Fox, Dan Bowker, Ethan Sudman, Holly Monteith, Konstantinos Moutselos, Luca De Alfaro, Michael Gheith, Paula Mikrut, Sean Neilan, and John Plamondon.
+We also thank all the students of our classes for their useful comments and suggestions.
+Finally, we thank Wikipedia, from which we borrowed a few ideas and examples.
+
+We also wish to thank Claude by Anthropic for significant help converting code from Python to Nim, catching technical inaccuracies, and clarifying explanations, and suggesting improvements throughout the text.
 
 \goodbreak\chapter{Overview of the Nim Language}
 
@@ -642,7 +646,7 @@ We will see {\ft discard} used throughout the book whenever a procedure is calle
 
 \index{generics}
 
-Generic parameters go in square brackets after the procedure name. The compiler instantiates a separate copy for each set of types used. This is the analogous of {\ft template<class T>} in C++: {\ft T} is a type placeholder, and the compiler generates a specialized version of the procedure for every concrete type at the call sites.
+Generic parameters go in square brackets after the procedure name. The compiler instantiates a separate copy for each set of types used. This is analogous to {\ft template<class T>} in C++: {\ft T} is a type placeholder, and the compiler generates a specialized version of the procedure for every concrete type at the call sites.
 
 \begin{lstlisting}
 proc swap[T](a, b: var T) =
@@ -784,7 +788,7 @@ let s = Stamp(id: 1, label: "A")     # ref constructor (allocates)
 echo p.y, " ", s.label
 \end{lstlisting}
 
-Most data structures in this book ({\ft Matrix}, {\ft DisjointSets}, {\ft NeuralNetwork}, {\ft MCEngine}, ...) are {\ft ref object}s because we want them to be passed by reference and mutated in place. This is in contrasts to modern Nim style prefers to use value types and move semantics instead of {\ft ref object}s, but our style makes Nim easier to use for beginners, especially those coming from Python.
+Most data structures in this book ({\ft Matrix}, {\ft DisjointSets}, {\ft NeuralNetwork}, {\ft MCEngine}, ...) are {\ft ref object}s because we want them to be passed by reference and mutated in place. This is in contrast to modern Nim style, which prefers value types and move semantics instead of {\ft ref object}s, but our style makes Nim easier to use for beginners, especially those coming from Python.
 
 A common pattern is to provide a {\ft newX} constructor procedure:
 
@@ -1160,14 +1164,14 @@ More formally, we can write the following:
 \begin{eqnarray}
 T_{worst}(n) \in O(g(n)) &\Rightarrow& A \in O(g(n)) \\
 T_{best}(n) \in \Omega(g(n)) &\Rightarrow& A \in \Omega(g(n)) \\
-A \in O(g(n)) \textrm{and} A \in O(g(n))  &\Rightarrow& A \in \Theta(g(n)) \\
+A \in O(g(n)) \textrm{ and } A \in \Omega(g(n))  &\Rightarrow& A \in \Theta(g(n)) \\
 \end{eqnarray}
 
 We still have not solved the problem of computing the best, average, and worst running times.
 
 \goodbreak\subsection{Best and worst running times}
 
-The procedure for computing the worst and best running times is similar. It is simple in theory but difficult in practice because it requires an understanding of the algorithm"s inner workings.
+The procedure for computing the worst and best running times is similar. It is simple in theory but difficult in practice because it requires an understanding of the algorithm's inner workings.
 
 Consider the following algorithm, which finds the minimum of an array or list A:
 \begin{lstlisting}
@@ -1241,7 +1245,7 @@ proc loop2(n: int) =
       echo i, " ", j
 \end{lstlisting}
 
-Here the time for the inner loop is directly determined by $n$ and does not depend on the outer loop"s counter; therefore
+Here the time for the inner loop is directly determined by $n$ and does not depend on the outer loop's counter; therefore
 
 \begin{equation}
 T(n)=\sum_{i=0}^{i<n}\sum_{j=0}^{j<n}1=\sum_{i=0}^{i<n}n=n^2+...\in \Theta
@@ -2381,7 +2385,7 @@ proc depthFirstSearch*[V](
   result = blacknodes
 \end{lstlisting}
 
-Notice that the BFS and the DFS differ by a single line (line 13 in the listings above), which determines whether graynodes is a queue (BSF) or a stack (DFS). When graynodes is a queue, the first vertex discovered is the first visited. When it is a stack, the last vertex discovered is the first visited.
+Notice that the BFS and the DFS differ by a single line (line 13 in the listings above), which determines whether graynodes is a queue (BFS) or a stack (DFS). When graynodes is a queue, the first vertex discovered is the first visited. When it is a stack, the last vertex discovered is the first visited.
 
 The DFS algorithm goes as follows:
 \begin{eqnarray}
@@ -2797,7 +2801,7 @@ echo 1.0 * float(input.len) / (float(encoded.len) / 8.0)
 # 2.44...
 \end{lstlisting}
 
-We managed to compress the original data by a factor 2.57.
+We managed to compress the original data by a factor 2.44.
 
 \index{entropy}
 
@@ -2857,7 +2861,7 @@ some speech recognition systems---find a close match between a new utterance
 and one in a library of classified utterances.
 \end{itemize}
 
-Let"s start with some simple observations about the LCS problem. If we have
+Let's start with some simple observations about the LCS problem. If we have
 two strings, say, ``ATGGCACTACGAT'' and ``ATCGAGC, '' we can represent a
 subsequence as a way of writing the two so that certain letters line up:
 \begin{lstlisting}
@@ -2867,7 +2871,7 @@ subsequence as a way of writing the two so that certain letters line up:
 \end{lstlisting}
 
 From this we can observe the following simple fact: if the two strings start
-with the same letter, it"s always safe to choose that starting letter as the
+with the same letter, it's always safe to choose that starting letter as the
 first character of the subsequence. This is because, if you have some other
 subsequence, represented as a collection of lines as drawn here, you can
 ``push'' the leftmost line to the start of the two strings without causing
@@ -2879,9 +2883,9 @@ characters differ. Then it is not possible for both of them to be part of a
 common subsequence.  There are three possible choices: remove the first letter from
 either one of the strings or remove the letter from both strings.
 
-Finally, observe that once we"ve decided what to do with the first
+Finally, observe that once we've decided what to do with the first
 characters of the strings, the remaining subproblem is again a LCS problem on two shorter strings. Therefore we can solve
-it recursively. However, because we don"t know which choice of the three to take,
+it recursively. However, because we don't know which choice of the three to take,
 we will take them all and see which choice returns the best result.
 
 Rather than finding the subsequence itself, it turns out to be more
@@ -2918,7 +2922,7 @@ let dna2 = "GATAGGTACCACAATAATAAGGATAGCTCGCAAATCCTCGA"
 echo lcs(dna1, dna2)   # 26
 \end{lstlisting}
 
-The algorithms can be shown to be $O(nm)$ (where $m=$ len(a) and $n=$ len(b)).
+The algorithm can be shown to be $O(nm)$ (where $m=$ len(a) and $n=$ len(b)).
 
 Another application of this algorithm is in the Unix {\ft diff} utility. Here is a simple example to find the number of common lines between two files:
 
@@ -3145,7 +3149,7 @@ $k$ & $f[0, k]$ \\ \hline
 \label{table0}
 \end{equation*}
 
-STAGE TWO: we maximize the return of investment considering offers from firm $%
+STAGE ONE: we maximize the return of investment considering offers from firm $%
 1$ and the prior table. We fill a table $f[1, k]$ with the maximum return of
 investment if we invest $k$ million dollars in firm $0$ and firm $1$:
 \begin{equation}
@@ -3165,7 +3169,7 @@ $k$ & $c[2, j]$ & $f[0, k-c[0, j]]$ & $f[1, k]$ \\ \hline
 \label{table_stage2}
 \end{equation*}
 
-STAGE THREE: we maximize the return of investment considering offers from
+STAGE TWO: we maximize the return of investment considering offers from
 firm $2$ and the preceding table. We fill a table $f[2, k]$ with the maximum
 return of investment if we invest $k$ million dollars in firm $0$, firm $1$,
 and firm $2$:
@@ -3210,7 +3214,7 @@ f[i, k]=\max_{j|c[i, j]<k}r[i, j]+f[i-1, k-c[i-1, j]]
 There are many algorithms available to cluster data~\cite{clustering}. They are all based on empirical principles because the clusters themselves are defined by the algorithm used to identify them. Normally we distinguish three categories:
 \begin{itemize}
 \item {\it Hierarchical clustering}: These algorithms start by considering each point a cluster of its own. At each iteration, the two clusters closest to each other are joined together, forming a larger cluster. Hierarchical clustering algorithms differ from each other about the rule used to determine the distance between clusters. The algorithm returns a tree representing the clusters that are joined, called a {\it dendrogram}.
-\item {\it Centroid-based clustering}: These algorithms require that each point be represented by a vector and each cluster also be represented by a vector (centroid of the cluster). With each iteration, a better estimation for the centroids is given. An example of centroid-based clustering is {\it k-means} clustering. These algorithms require an a priori knowledge of the number of clusters and return the position of the centroids as well the set of points belonging to each cluster.
+\item {\it Centroid-based clustering}: These algorithms require that each point be represented by a vector and each cluster also be represented by a vector (centroid of the cluster). With each iteration, a better estimation for the centroids is given. An example of centroid-based clustering is {\it k-means} clustering. These algorithms require an a priori knowledge of the number of clusters and return the position of the centroids as well as the set of points belonging to each cluster.
 \item {\it Distribution-based clustering}: These algorithms are based on statistics (more than the other two categories). They assume the points are generated from a distribution (which must be known a priori) and determine the parameters of the distribution. It provides clustering because the distribution may be a sum of more than one localized distribution (each being a cluster).
 \end{itemize}
 
@@ -3235,7 +3239,7 @@ The following algorithm is a hierarchical clustering algorithm with the followin
 
 The algorithm works like any other hierarchical clustering algorithm. At the beginning, all-to-all distances are computed and stored in a list {\ft d}. Each point is its own cluster. At each iteration, the two clusters closer together are merged to form one bigger cluster. The distance between each other cluster and the merged cluster is computed by performing a weighted average of the distances between the other cluster and the two merged clusters. The weight factors are provided as input. This is equivalent to what the $k$-means algorithm does by computing the position of a centroid based on the vectors of the member points.
 
-The algorithm {\ft self.q} implements disjointed sets representing the set of clusters. The algorithm {\ft self.q} is a dictionary. If {\ft self.q[i]} is a list, then {\ft i} is its own cluster, and the list contains the IDs of the member points. If  {\ft self.q[i]} is an integer, then cluster {\ft i} is no longer its own cluster as it was merged to the cluster represented by the integer.
+The algorithm {\ft self.q} implements disjoint sets representing the set of clusters. The algorithm {\ft self.q} is a dictionary. If {\ft self.q[i]} is a list, then {\ft i} is its own cluster, and the list contains the IDs of the member points. If  {\ft self.q[i]} is an integer, then cluster {\ft i} is no longer its own cluster as it was merged to the cluster represented by the integer.
 
 At each point in time, each cluster is represented by one element, which can be found recursively by {\ft self.parent(i)}. This function returns the ID of the cluster containing element {\ft i} and returns a list of IDs of all points in the same cluster:
 
@@ -3516,7 +3520,7 @@ for i, e in predictions:
   if e[0] * v[i + 5] > 0: hits += 1.0
 let successRate = hits / float(pat.len)
 \end{lstlisting}
-The learning process depends on the random number generator; therefore, sometimes, for this small training data set, the network succeeds in predicting the sign of the next day arithmetic return of the stock with more than 50\% probability, and sometimes it does not. We leave it to the reader to study the significance of this result but using a different subset of the data for the training of the network and for testing its success rate.
+The learning process depends on the random number generator; therefore, sometimes, for this small training data set, the network succeeds in predicting the sign of the next day arithmetic return of the stock with more than 50\% probability, and sometimes it does not. We leave it to the reader to study the significance of this result by using a different subset of the data for the training of the network and for testing its success rate.
 
 \goodbreak\subsection{Genetic algorithms}
 
@@ -3528,7 +3532,7 @@ We have a population of chromosomes in which each chromosome is just a data stru
 
 We also have a metric to measure the fitness of each chromosome.
 
-At each iteration, only the top-ranking chromosomes in the population survive. The top 10 mate with each other, and their offspring constitute the population for the next iteration. When two members of the population mate, the newborn member of the population has a new DNA sequence, half of which comes from the father and half from the mother, with two randomly mutated DNA basis.
+At each iteration, only the top-ranking chromosomes in the population survive. The top 10 mate with each other, and their offspring constitute the population for the next iteration. When two members of the population mate, the newborn member of the population has a new DNA sequence, half of which comes from the father and half from the mother, with two randomly mutated DNA bases.
 
 The algorithm stops when we reach a maximum number of generations or we find a chromosome of the population with maximum fitness.
 
@@ -3633,9 +3637,9 @@ There are a number of open problems about the relations among these sets.
 Is the set co-NP equivalent to NP? Or perhaps is the intersection between co-NP and NP equal to P?
 Are NP and NPC the same set? These questions are very important in computer science because if, for example, NP turns out to be the same set as NPC, it means that it must be possible to find algorithms that solve in polynomial time problems that currently do not have a polynomial time solution. Conversely, if one could prove that NP is not equivalent to NPC, we would know that a polynomial time solution to NPC problems does not exist~\cite{pnp}.
 
-\subsection{Cantor"s argument}
+\subsection{Cantor's argument}
 
-\index{Cantor"s argument}
+\index{Cantor's argument}
 
 Cantor proved that the real numbers in any interval (e.g., in $[0, 1)$)
 are more than the integer numbers, therefore real numbers are uncountable~\cite{hofstadter}.
@@ -3682,20 +3686,20 @@ digit. Therefore the existence of $\alpha $ disproves the assumption that
 all real numbers in the interval $[0, 1)$ are listed in the table.
 \end{enumerate}
 
-There is a very practical consequence of this argument. In fact, in chapter 2, we have seen the distinction between type {\ft float} and class {\ft Decimal}. We have seen about pitfalls of {\ft float} and how {\ft Decimal} can represent floating point numbers with arbitrary precision (assuming we have the memory to do so). Cantor"s argument tells us there are numbers that cannot even be represented as {\ft Decimal} because they would require an infinite amount of storage; $\pi$ and $e$ are examples of these numbers.
+There is a very practical consequence of this argument. In fact, in chapter 2, we have seen the distinction between type {\ft float} and class {\ft Decimal}. We have seen about pitfalls of {\ft float} and how {\ft Decimal} can represent floating point numbers with arbitrary precision (assuming we have the memory to do so). Cantor's argument tells us there are numbers that cannot even be represented as {\ft Decimal} because they would require an infinite amount of storage; $\pi$ and $e$ are examples of these numbers.
 
-\subsection{G\"odel"s theorem}
+\subsection{G\"odel's theorem}
 
-\index{G\"odel"s theorem}
+\index{G\"odel's theorem}
 
 G\"odel used a similar diagonal argument to prove that there are as many
 problems (or theorems) as real numbers and as many algorithms (or proofs) as
 natural numbers~\cite{hofstadter}. Because there is more of the former than the latter, it
 follows that there are problems for which there is no corresponding solving
-algorithm. Another interpretation of G\"odel"s theorem is that, in any formal
+algorithm. Another interpretation of G\"odel's theorem is that, in any formal
 language, for example, mathematics, there are theorems that cannot be proved.
 
-Another consequence of G\"odel"s theorem is the following:
+Another consequence of G\"odel's theorem is the following:
 it is impossible to write a computer program to test if a given algorithm
 stops or enters into an infinite loop.
 
@@ -3757,11 +3761,11 @@ We define the condition number of $f$ in $x$ as
 \end{equation}
 (the latter equality only holds if $f$ is differentiable in $x$).
 
-A problem with a low condition number is said to be well-conditioned, while a problem with a high condition number is said to be ill-conditioned. XXX
+A problem with a low condition number is said to be well-conditioned, while a problem with a high condition number is said to be ill-conditioned.
 
 We say that a problem characterized by a function $f$ is well conditioned in a domain $D$ if the condition number is less than 1 for every input in the domain. We also say that a problem is stable if it is well conditioned.
 
-In this book, we are mostly concerned with stable (well-conditioned) problems. If a problem is well-conditioned in for all input in a domain, it is also stable.
+In this book, we are mostly concerned with stable (well-conditioned) problems. If a problem is well-conditioned for all input in a domain, it is also stable.
 
 
 \goodbreak\section{Approximations and error analysis}
@@ -4085,7 +4089,7 @@ When this is the case, the function can be locally approximated with a local pow
 f(x) = f(\bar x) + f^{(0)}(\bar x)(x-\bar x) + ... + \frac{f^{(k)}(\bar x)}{n!}(x-\bar x)^k + R_k
 \end{equation}
 
-The remainder $R_k$ can be proven to be (Taylor"s theorem):
+The remainder $R_k$ can be proven to be (Taylor's theorem):
 \begin{equation}
 R_k = \frac{f^{(k+1)}(\xi)}{(k+1)!}(x-\bar x)^{k+1}
 \end{equation}
@@ -4176,7 +4180,7 @@ e^{ix} = \cos(x) + i \sin(x)
 \end{equation}
 which will be useful when we talk about Fourier and Laplace transforms.
 
-Now let"s consider the $k$th term in Taylor expansion of $e^x$. It can be rearranged as a function of the previous $(k-1)-th$ term:
+Now let's consider the $k$th term in Taylor expansion of $e^x$. It can be rearranged as a function of the previous $(k-1)-th$ term:
 
 \begin{equation}
 T_k(x) = \frac1{k!}x^n = \frac{x}{k} \frac1{(k-1)!}x^{k-1} = \frac{x}{k} T_{k-1}(x)
@@ -5589,7 +5593,7 @@ One important application of the Jacobi algorithm is for principal component ana
 
 Here we consider, as an example, the time series of the adjusted arithmetic returns for the S\&P100 stocks that we downloaded and stored in chapter 2.
 
-Each time series is a vector. We know they are not independent because there are correlations. Our goal is to model each time series and a vector plus noise where the vector is the same for all series. We also want find that vector that has maximal superposition with the individual time series, the principal component.
+Each time series is a vector. We know they are not independent because there are correlations. Our goal is to model each time series as a vector plus noise where the vector is the same for all series. We also want to find that vector that has maximal superposition with the individual time series, the principal component.
 
 First, we compute the correlation matrix for all the stocks. This is a nontrivial task because we have to make sure that we only consider those days when all stocks were traded. %%%% FIXME EXPLAIN MORE
 
@@ -5632,7 +5636,7 @@ savePlot("images/correlations.png",
 
 \begin{figure}[ht]
 \centering\includegraphics[width=4in]{images/correlations.png}
-\caption{Eigenvalues of the correlation matrix for 5 fake stocks stocks, sorted by their magnitude.}
+\caption{Eigenvalues of the correlation matrix for 5 fake stocks, sorted by their magnitude.}
 \end{figure}
 
 \index{alpha}\index{beta}
@@ -6452,7 +6456,7 @@ proc optimizeNewtonMultiImproved*(
 
 \goodbreak\section{Nonlinear fitting}
 
-Finally, we have all the ingredients to implement a very generic fitting function that will work linear and nonlinear least squares.
+Finally, we have all the ingredients to implement a very generic fitting function that will work for linear and nonlinear least squares.
 
 Here we consider a generic experiment or simulated experiment that generates points of the form $(x_i, y_i \pm \delta y_i)$. Our goal is to minimize the $\chi^2$ defined as
 \begin{equation}
@@ -6757,7 +6761,7 @@ Given a fixed $N$, we can always find $N$ vectors $\mathbf{b}_0, \mathbf{b}_1...
 \mathbf{b}_i \cdot \mathbf{b}_j = \sum_k b_{ik} b_{ik} = \delta_{ij}
 \end{equation}
 
-Here $b_{jk}$ is the $k$ component of vector $\mathbf{b}_j$ and $\delta_{ij}$ is the Kroneker delta defined as 0 when $i\neq j$ and 1 when $i == j$.
+Here $b_{jk}$ is the $k$ component of vector $\mathbf{b}_j$ and $\delta_{ij}$ is the Kronecker delta defined as 0 when $i\neq j$ and 1 when $i == j$.
 
 Any set of vectors $\{\mathbf{b}_j\}$ meeting the preceding condition is called an orthonormal basis. Any other vector $\mathbf{u}$ can be represented by its projections over the basis vectors:
 
@@ -7004,7 +7008,7 @@ The naive solution is due to Euler:
 \mathbf{y}(x+h) = \mathbf{y}(x) + hF(\mathbf{y}, x)\label{euler}
 \end{equation}
 
-The solution is found by iterating the latest equation. Here $h$ is an arbitrary discretization step. Euler"s method works even if the $a_k$ coefficients depend on $x$.
+The solution is found by iterating the latest equation. Here $h$ is an arbitrary discretization step. Euler's method works even if the $a_k$ coefficients depend on $x$.
 
 \index{Runge--Kutta method}
  Although the Euler integrator works in theory, its systematic error adds up and does not disappear in the limit $h\rightarrow 0$. More accurate integrators are the Runge--Kutta and the Adams--Bashforth. In the fourth-order Runge--Kutta, the {\it classical Runge--Kutta method}, we also solve the differential equation by iteration, except that eq.~\ref{euler} is replaced with
@@ -7093,7 +7097,7 @@ The axiomatic definition makes it easy to prove theorems, for example,
 {\it If $S=A\cup A^c$ and $A\cap A^c=0$ then $\textrm{Prob}(A)=1-\textrm{Prob}(A^c)$}
 
 Nim's standard library includes the {\ft std/random} module, which can generate random numbers; we can use it to perform some experiments.
-Let"s simulate a dice with six possible outcomes.
+Let's simulate a dice with six possible outcomes.
 We can use the frequentist definition:
 
 \begin{lstlisting}
@@ -7121,7 +7125,7 @@ echo Prob(@[6], S)        # 0.16666666666666666
 echo Prob(@[1, 2], S)     # 0.3333333333333333
 \end{lstlisting}
 
-As stated before, the latter is more precise because it produces results for an ``ideal'' dice while the frequentist"s approach produces results for a real dice (in our case, a simulated dice).
+As stated before, the latter is more precise because it produces results for an ``ideal'' dice while the frequentist's approach produces results for a real dice (in our case, a simulated dice).
 
 \goodbreak\subsection{Conditional probability and independence}
 
@@ -7137,7 +7141,7 @@ we conclude $\textrm{Prob}(AB)=\textrm{Prob}(A)\textrm{Prob}(B)$; therefore the 
 independent events occur is the product of the probability that each individual event
 occurs.
 
-We can experiment with conditional probability programmatically. Let's consider two dices, X and Y.
+We can experiment with conditional probability programmatically. Let's consider two dice, X and Y.
 The space of all possible outcomes is given by $S^2 = S \times S$.
 And we are interested in the probability of the second die giving a $6$ given that the first dice is also a $6$:
 
@@ -7153,9 +7157,9 @@ proc probConditional[T](A, B, S: seq[T]): float =
 echo probConditional(@[6], @[6], S)   # 0.16666666666666666
 \end{lstlisting}
 
-Because we are only considering cases in which the second die is 6, we will pretend that when the second die is 1 through 5 didn"t occur.
+Because we are only considering cases in which the second die is 6, we will pretend that when the second die is 1 through 5 didn't occur.
 Not surprisingly, we find that {\ft Prob\_conditional([6], [6], S)} produces the same result as
-{\ft Prob([6], S)} because the two dices are independent.
+{\ft Prob([6], S)} because the two dice are independent.
 
 In fact, we say that two sets of events $A$ and $B$ are independent if and only if $\textrm{P}(A|B) = \textrm{P}(A)$.
 
@@ -7216,7 +7220,7 @@ proc variance*(X: seq[float]): float =
 proc sd*(X: seq[float]): float = sqrt(variance(X))
 \end{lstlisting}
 
-As an example, let"s consider a simple bet on a dice. We roll the dice once and win \$20 if the dice returns 6; we lose \$5 otherwise:
+As an example, let's consider a simple bet on a dice. We roll the dice once and win \$20 if the dice returns 6; we lose \$5 otherwise:
 
 \begin{lstlisting}
 let S = @[1.0, 2.0, 3.0, 4.0, 5.0, 6.0]
@@ -7459,8 +7463,8 @@ An example is the Pareto distribution.
 \index{error in the mean}
 
 One consequence of the Central Limit Theorem is a useful formula for evaluating the error in the mean.
-Let"s consider the case of $N$ repeated experiments with outcomes $X_i$.
-Let"s also assume that each $X_i$ is supposed to be equal to an unknown
+Let's consider the case of $N$ repeated experiments with outcomes $X_i$.
+Let's also assume that each $X_i$ is supposed to be equal to an unknown
 value $\mu $, but in practice, $X_i=\mu +\varepsilon $, where $\varepsilon $ is
 a random variable with Gaussian distribution centered at zero. One could
 estimate $\mu $ by $\mu =E[X]=\frac 1N\Sigma _iX_i$.
@@ -7588,11 +7592,11 @@ proc simulateCards(n = 1000): float =
 echo simulateCards()
 \end{lstlisting}
 
-\goodbreak\subsection{Gambler"s fallacy}
+\goodbreak\subsection{Gambler's fallacy}
 
 The typical error in computing probabilities is mixing a priori probability
 with information about past events.
-This error is called the {\it gambler"s fallacy}~\cite{gambler}.
+This error is called the {\it gambler's fallacy}~\cite{gambler}.
 For example, we consider the preceding problem. We see the first two cards, and they are both red. What is the
 probability that the third one is also red?
 
@@ -7968,7 +7972,7 @@ x_i=(x_{i-j}+x_{i-k})\textrm{mod}m
 This is similar to the multiplicative recursive generator earlier. If $m$ is
 prime and $j\neq k$, the period can be as large as $m^k-1$.
 
-\goodbreak\subsection{Marsaglia"s add-with-carry generator}
+\goodbreak\subsection{Marsaglia's add-with-carry generator}
 
 \begin{equation}
 x_i=(x_{i-j}+x_{i-k}+c_i)\textrm{mod}m
@@ -7976,7 +7980,7 @@ x_i=(x_{i-j}+x_{i-k}+c_i)\textrm{mod}m
 
 where $c_1=0$ and $c_i=1$ if $(x_{i-1-j}+x_{i-1-k}+c_{i-1})<m$, $0$
 
-\goodbreak\subsection{Marsaglia"s subtract-and-borrow generator}
+\goodbreak\subsection{Marsaglia's subtract-and-borrow generator}
 
 \begin{equation}
 x_i=(x_{i-j}-x_{i-k}-c_i)\textrm{mod}m
@@ -7985,9 +7989,9 @@ x_i=(x_{i-j}-x_{i-k}-c_i)\textrm{mod}m
 where $k>j>0$, $c_1=0$, and $c_i=1$ if $(x_{i-1-j}-x_{i-1-k}-c_{i-1})<0$, $0$
 otherwise.
 
-\goodbreak\subsection{L\"uscher"s generator}
+\goodbreak\subsection{L\"uscher's generator}
 
-The Marsaglia"s subtract-and-borrow is a very popular generator, but it is known
+The Marsaglia's subtract-and-borrow is a very popular generator, but it is known
 to have some problems. For example, if we construct vector
 \begin{equation}
 v_i=(x_i, x_{i+1}, ..., x_{i+k})
@@ -7995,7 +7999,7 @@ v_i=(x_i, x_{i+1}, ..., x_{i+k})
 and the coordinates of the point $v_i$ are numbers closer to each other then
 the coordinates of the point $v_{i+k}$ are also close to each other. This
 indicates that there is an unwanted correlation between the points $%
-x_i, x_{i+1}, ..., x_{i+k}$. L\"uscher observed~\cite{lusher} that the Marsaglia"s
+x_i, x_{i+1}, ..., x_{i+k}$. L\"uscher observed~\cite{lusher} that the Marsaglia's
 subtract-and-borrow is equivalent to a chaotic discrete dynamic system, and
 the preceding correlation dies off for points that distance themselves more than $k$. Therefore
 he proposed to modify the generator as follows: instead of taking all $x_i$
@@ -8003,7 +8007,7 @@ numbers, read $k$ successive elements of the sequence, discard $p-k$
 numbers, read $k$ numbers, and so on. The number $p$ has to be chosen to be
 larger than $k$. When $p=k$, the original Marsaglia generator is recovered.
 
-\goodbreak\subsection{Knuth"s polynomial congruential generator}
+\goodbreak\subsection{Knuth's polynomial congruential generator}
 
 \begin{equation}
 x_i=(ax_{i-1}^2+bx_{i-1}+c)\textrm{mod}m
@@ -8166,7 +8170,7 @@ non-overlapping blocks, leapfrogging, and Lehmer trees.
 
 \goodbreak\subsection{Non-overlapping blocks}
 
-Let"s consider one sequence of pseudo random numbers:
+Let's consider one sequence of pseudo random numbers:
 \begin{equation}
 x_0, x_1, ..., x_k, x_{k+1}, ..., x_{2k}, x_{2k+1}, ..., x_{3k}, x_{3k+1}, ...,
 \end{equation}
@@ -8194,7 +8198,7 @@ independently, generated the subsequences.
 \goodbreak\subsection{Leapfrogging}
 
 Another and probably more popular technique is leapfrogging.
-Let"s consider one sequence of pseudo random numbers:
+Let's consider one sequence of pseudo random numbers:
 \begin{equation}
 x_0, x_1, ..., x_k, x_{k+1}, ..., x_{2k}, x_{2k+1}, ..., x_{3k}, x_{3k+1}, ...,
 \end{equation}
@@ -8264,7 +8268,7 @@ In this section and the next, we provide examples of distributions other than un
 
 Consider the problem of generating a random number $x$ from a given distribution $p(x)$. The {\it accept--reject method} consists of generating $x$ using a different distribution, $g(x)$, and a uniform random number, $u$, between 0, 1. If $u<p(x)/Mg(x)$ ($M$ is the max of $p(x)/g(x)$), then $x$ is the desired random number following distribution $p(x)$. If not, try another number.
 
-To visualize why this works, imagine graphing the distribution $p$ of the random variable $x$ onto a large rectangular board and throwing darts at it, the coordinates of the dart being $(x, u)$. Assume that the darts are uniformly distributed around the board. Now take off (reject) all of the darts that are outside the curve. The remaining darts will be distributed uniformly within the curve, and the $x$-positions of these darts will be distributed according to the random variable"s density. This is because there is the most room for the darts to land where the curve is highest and thus the probability density is greatest.
+To visualize why this works, imagine graphing the distribution $p$ of the random variable $x$ onto a large rectangular board and throwing darts at it, the coordinates of the dart being $(x, u)$. Assume that the darts are uniformly distributed around the board. Now take off (reject) all of the darts that are outside the curve. The remaining darts will be distributed uniformly within the curve, and the $x$-positions of these darts will be distributed according to the random variable's density. This is because there is the most room for the darts to land where the curve is highest and thus the probability density is greatest.
 
 The $g$ distribution is nothing but a shape so that all darts we throw are below it. There are two particular cases. In one case, $g=p$, we only throw darts below the $p$ that we want; therefore we accept them all. This is the most efficient case, but it is not of practical interest because it means the accept--reject is not doing anything, as we already know now to generate numbers according to $p$. The other case is $g(x) = constant$. This means we generate the $x$ uniformly before the accept--reject. This is equivalent to throwing the darts everywhere on the square board, without even trying to be below the curve $p$.
 
@@ -8351,7 +8355,7 @@ proc lookup*[K](r: RandomSource, table: seq[(K, float)],
   raise newException(ArithmeticDefect, "invalid probability")
 \end{lstlisting}
 
-Let"s say we want a random number generator that can only produce the
+Let's say we want a random number generator that can only produce the
 outcome 0, 1 or 2 with known probabilities:
 \begin{eqnarray}
 \textrm{Prob}(X &=&0)=0.50 \\
@@ -8412,7 +8416,7 @@ lookup that runs in $O(\left\lceil \log _2n\right\rceil )$. As the naive
 table lookup is an application of the linear search, the F-Y is an
 application of the binary search.
 
-Let"s assume that $n=2^t$ is an exact power of $2$. If this is not the case,
+Let's assume that $n=2^t$ is an exact power of $2$. If this is not the case,
 we can always reduce to this case by adding new values to the lookup table
 corresponding to $0$ probability. The basic data structure behind the F-Y
 method is an array of arrays $a_{ij}$ built according to the following rules:
@@ -8607,17 +8611,17 @@ has a 0.4 probability of selling one candy bar and a 0.6 probability of
 selling nothing.
 
 \begin{itemize}
-\item  What"s the probability of selling the last candy bar at the $n$th house?
+\item  What's the probability of selling the last candy bar at the $n$th house?
 \begin{equation}
 p(n)=\binom{n-1}40.4^50.6^{n-5}
 \end{equation}
 
-\item  What"s the probability that he finishes on the tenth house?
+\item  What's the probability that he finishes on the tenth house?
 \begin{equation}
 p(10)=\binom 940.4^50.6^5=0.10
 \end{equation}
 
-\item  What"s the probability that he finishes on or before reaching the
+\item  What's the probability that he finishes on or before reaching the
 eighth house? Answer: To finish on or before the eighth house, he must
 finish at the fifth, sixth, seventh, or eighth house. Sum those
 probabilities:
@@ -8625,7 +8629,7 @@ probabilities:
 \sum_{i=5, 6, 7, 8}p(i)=0.1737
 \end{equation}
 
-\item  What"s the probability that he exhausts all houses in the
+\item  What's the probability that he exhausts all houses in the
 neighborhood without selling the five candy bars?
 \begin{equation}
 1-\sum_{i=5, .., 30}p(i)=0.0015
@@ -8663,7 +8667,7 @@ Notice once again that, unlike the binomial case, here $k$ is fixed, not $n$, an
 \index{distribution!Poisson}
 
 The Poisson distribution is a discrete probability distribution discovered
-by Sim\"{e}on-Denis Poisson. It describes a random variable
+by Sim\'{e}on-Denis Poisson. It describes a random variable
 $X$ that counts, among other things, the number of
 discrete occurrences (sometimes called {\it arrivals}) that take place during
 a time interval of given length. The probability that there are exactly $x$
@@ -8720,7 +8724,7 @@ n\right) ^{n-k}\simeq e^{-\lambda }\frac{\lambda ^k}{k!}+O(\frac 1n)
 
 Intuitively, the meaning of $\lambda $ is the following:
 
-Let"s consider a unitary time interval $T$ and divide it into
+Let's consider a unitary time interval $T$ and divide it into
 $n$ subintervals of the same size.
 Let $p_n$ be the probability of one success occurring in a single
 subinterval. For $T$ fixed when $n\rightarrow \infty , $ $p_n\rightarrow 0$
@@ -9086,7 +9090,7 @@ partitions and counting how many events fall into each partition. We can bin
 the numbers generated by a pseudo random number generator and measure the
 distribution of the random numbers.
 
-Let"s consider the following program:
+Let's consider the following program:
 \begin{lstlisting}
 import std/times
 
@@ -9225,7 +9229,7 @@ which produces the following output:
 999 3.14..
 \end{lstlisting}
 
-A better formula is due to Plauffe,
+A better formula is due to Plouffe,
 
 \begin{equation}
 \pi = \sum_{i=0} \frac{1}{16^i} \left(
@@ -9240,7 +9244,7 @@ we can use the program
 # we use plain `float` here. For the high-precision form a `BigFloat`
 # package such as `bignum` would replace the `float` type below.
 
-proc piPlauffe(n: int): float =
+proc piPlouffe(n: int): float =
   var pi = 0.0
   let a = 4.0
   let b = 2.0
@@ -9252,7 +9256,7 @@ proc piPlauffe(n: int): float =
                               c/(i8+5.0) - c/(i8+6.0))
   return pi
 
-echo piPlauffe(1000)
+echo piPlouffe(1000)
 \end{lstlisting}
 
 The preceding formula works and converges very fast and already in 100 iterations produces
@@ -9295,7 +9299,7 @@ The output of the algorithm is shown in fig.~\ref{pi-plot}.
 
 The convergence rate in this case is very slow, and this algorithm is of no practical value, but the methodology is sound, and for some problems, this method is the only one feasible.
 
-Let"s summarize what we have done: we have formulated our problem (compute $%
+Let's summarize what we have done: we have formulated our problem (compute $%
 \pi $) as the problem of computing an area (the area of a quarter of a
 circle), and we have computed the area using random numbers. This is a
 particular example of a more general technique known as a Monte Carlo
@@ -9307,7 +9311,7 @@ Sometimes the formula is not known, or it is too complex to compute reliably, he
 
 \goodbreak\subsection{Simulating an online merchant}
 
-Let"s consider an online merchant. A website is visited many times a day.
+Let's consider an online merchant. A website is visited many times a day.
 From the logfile of the web application, we determine
 that the average number of visitors in a day is 976, the number of
 visitors is Gaussian distributed, and the standard deviation is 352. We also observe that each visitor has a 5\% probability of purchasing an item
@@ -9542,7 +9546,7 @@ Our engine finds that the value of $\pi$ with 68\% confidence level is between $
 
 \subsection{Value at risk}\index{value at risk}
 
-Let"s consider a business subject to random losses, for example, a large bank subject to theft from employees.
+Let's consider a business subject to random losses, for example, a large bank subject to theft from employees.
 Here we will make the following reasonable assumptions (which have been verified with data):
 \begin{itemize}
 \item There is no correlation between individual events.
@@ -9616,7 +9620,7 @@ The output of the {\ft var} function answers our second questions: We have to sa
 \subsection{Network reliability}
 \index{network reliability}
 
-Let"s consider a network represented by a set of $n_{nodes}$ nodes and $%
+Let's consider a network represented by a set of $n_{nodes}$ nodes and $%
 n_{links}$ bidirectional links. Information
 packets travel on the network. They can
 originate at any node ({\ft start}) and be addressed to any other node ({\ft %
@@ -9760,11 +9764,11 @@ Fig.~\ref{nuclear2} shows the output of the program, the probability of a chain 
 
 \goodbreak\subsection{One-dimensional Monte Carlo integration}
 
-Let"s consider a one-dimensional integral
+Let's consider a one-dimensional integral
 \begin{equation}
 I=\int_a^bf(x)dx
 \end{equation}
-Let"s now determine two functions $g(x)$ and $p(x)$ such that
+Let's now determine two functions $g(x)$ and $p(x)$ such that
 \begin{equation}
 p(x)=0\text{ for }x\in [-\infty , a]\cup [n, \infty ]
 \end{equation}
@@ -9973,13 +9977,13 @@ function is defined can be a time interval (and the stochastic is called a
 {\it time series}) or a region of space (and the stochastic process is
 called a {\it random field}). Familiar examples of time series include {\it %
 random walks}~\cite{rwalk}; stock market and exchange rate fluctuations; signals such as
-speech, audio, and video; or medical data such as a patient"s EKG, EEG, blood
+speech, audio, and video; or medical data such as a patient's EKG, EEG, blood
 pressure, or temperature. Examples of random fields include static images,
 random topographies (landscapes), or composition variations of an
 inhomogeneous material.
 
-Let"s consider a grasshopper moving on a straight line, and let $X_n$ be the
-position of the grasshopper at time $t=n\Delta _t$. Let"s also assume that at time 0,
+Let's consider a grasshopper moving on a straight line, and let $X_n$ be the
+position of the grasshopper at time $t=n\Delta _t$. Let's also assume that at time 0,
 $X_0=0$. The position of the grasshopper at each future ($t>0$) time is unknown.
 Therefore it is a random variable.
 
@@ -9994,7 +9998,7 @@ whose distribution depends on the model; $\mu$ is a constant drift term
 It is clear that $X_{n+1}$ only
 depends on $X_n$ and $\varepsilon _n$; therefore the probability distribution
 of $X_{n+1}$ only depends on $X_n$ and the probability distribution of $%
-\varepsilon _n$, but it does not depend on the past history of the grasshopper"s movements at
+\varepsilon _n$, but it does not depend on the past history of the grasshopper's movements at
 times $t<n\Delta _t$. We can write the statement by saying that
 \begin{equation}
 \textrm{Prob}(X_{n+1}=x|\{X_i\}\text{ for }i\leq n)=\textrm{Prob}(X_{n+1}=x|X_n)  \label{markov2}
@@ -10060,7 +10064,7 @@ For large $n$, the following distribution in $k/n$ tends to a Gaussian distribut
 \goodbreak\subsection{Random walk: Ito process}
 \index{Ito process}
 
-Let"s assume an Ito process for our random walk: $\varepsilon _n$ is normally
+Let's assume an Ito process for our random walk: $\varepsilon _n$ is normally
 (Gaussian) distributed. We consider discrete time intervals of equal length $%
 \Delta _t$, at each time step if $\varepsilon _n=\varepsilon $ with
 probability density function $p(\varepsilon )=\frac{1}{\sqrt{2\pi}}e^{-\varepsilon ^2/2}$. It turns
@@ -10144,7 +10148,7 @@ Our goal is to model $p_\tau(x)$, the distribution of possible prices for the un
 To price an option, we need to know $p_\tau (S_\tau )$. This means we need to
 know something about the future behavior of the price $S_\tau $ of the
 underlying asset $S$ (a stock, an index, or something else). In absence of
-other information (crystal ball or illegal insider"s information), one may
+other information (crystal ball or illegal insider's information), one may
 try to gather information from a statistical analysis of the past historic
 data combined with a model of how the price $S_\tau $ evolves as a function of
 time. The most typical model is the binomial model, which is a Wiener
@@ -10227,7 +10231,7 @@ There are three parameters in the preceding equation:
 \begin{itemize}
 \item  $\Delta _t$ is the time step we use in our discretization. $\Delta _t$
 is not a physical parameter; it has nothing to do with the asset. It has to
-do with the precision of our computation. Let"s assume that $\Delta _t=1$ day.
+do with the precision of our computation. Let's assume that $\Delta _t=1$ day.
 
 \item  $\mu $ is a drift term, and it represents the expected rate of return
 of the asset over a time scale of one year. For risk-neutral option pricing the relevant drift in the {\it log-return} formulation is not the risk-free rate $r$ itself, but $r - \sigma^2/2$ (the It\^o convexity correction): with this choice the discounted spot $e^{-rt}S_t$ is a martingale, which is the no-arbitrage condition behind the Black--Scholes price. Setting $\mu = r$ in the equation above instead of $\mu = r - \sigma^2/2$ overprices the option by a factor that grows with $\sigma^2 \tau$.
@@ -10238,7 +10242,7 @@ stochastic fluctuations of the log-price over a time interval of one year.
 
 Notice that this model is equivalent to the previous binomial model for large time intervals, in the same sense as the binomial distribution for large values of $n$ approximates the Gaussian distribution. For large $T$, converge to the same result.
 
-Notice how our assumption that log-return is Gaussian is different and not compatible with Markowitz"s assumption of modern portfolio theory (the arithmetic return is Gaussian). In fact, log returns and arithmetic returns cannot both be Gaussian. It is therefore incorrect to optimize a portfolio using MPT when the portfolio includes options priced using Black--Scholes. The price of an individual asset cannot be negative, therefore its arithmetic return cannot be negative and it cannot be Gaussian. Conversely, a portfolio that includes both short and long positions (the holder is the buyer and seller of options) can have negative value. A change of sign in a portfolio is not compatible with the Gaussian log-return assumption.
+Notice how our assumption that log-return is Gaussian is different and not compatible with Markowitz's assumption of modern portfolio theory (the arithmetic return is Gaussian). In fact, log returns and arithmetic returns cannot both be Gaussian. It is therefore incorrect to optimize a portfolio using MPT when the portfolio includes options priced using Black--Scholes. The price of an individual asset cannot be negative, therefore its arithmetic return cannot be negative and it cannot be Gaussian. Conversely, a portfolio that includes both short and long positions (the holder is the buyer and seller of options) can have negative value. A change of sign in a portfolio is not compatible with the Gaussian log-return assumption.
 
 If we are pricing a European call option, we are only interested in $S_T$ and not in $S_t$ for $0<t<T$; therefore we can choose $\Delta_t = T$. In this case, we obtain
 
@@ -10400,7 +10404,7 @@ In the case where each of the $x_i$ has a Gaussian distribution and the only dep
 
 The Metropolis algorithm provides a general and simpler solution to this problem. It is not always the most efficient, but more sophisticated algorithms are nothing but refinements and extensions of its simple idea.
 
-Let"s formulate the problem once more: we want to generate ${\bf x}%
+Let's formulate the problem once more: we want to generate ${\bf x}%
 =x_0, x_1, ..., x_{n-1}$ where $x_0, x_1, ..., x_{n-1}$ are $n$ correlated random
 variables whose probability mass function is given by
 \begin{equation}
@@ -10704,7 +10708,7 @@ main()
 
 This is the well-known {\it HP lattice model}, introduced by Ken Dill in 1985~\cite{folding}: the protein is reduced to a self-avoiding walk on a (here cubic) lattice in which each residue is classified as hydrophobic (H) or polar (P), and the energy counts only hydrophobic--solvent contacts. Despite its drastic simplification, it captures the cooperative collapse driven by the hydrophobic effect and is a standard playground for studying folding algorithms.
 
-The {\ft move} procedure dispatches on the solid-angle code {\ft 0..5} and maps a cell {\ft (x, y, z)} to the coordinates of the neighbouring cube in that direction.
+The {\ft move} procedure dispatches on the solid-angle code {\ft 0..5} and maps a cell {\ft (x, y, z)} to the coordinates of the neighboring cube in that direction.
 
 The annealing procedure is performed in the {\ft main} function. The {\ft fold} procedure is one Metropolis step. The purpose of the {\ft while} loop inside {\ft fold} is to draw a valid trial folding for the accept--reject step. Some trials are invalid because they are not physical: they would require two amino-acids to occupy the same lattice cell (a self-avoiding-walk violation). When this happens, {\ft computeFolding} returns an empty {\ft Table}, and the loop tries again with a different randomly perturbed angle.
 
@@ -10743,7 +10747,7 @@ For some parts of this chapter, we will use a simulator called {\ft PSim}, writt
 \index{parallel architectures}\index{Flynn classification}\index{SISD}\index{SIMD}\index{MIMD}
 
 
-Parallel computer architecture classifications are known as Flynn"s taxonomy~\cite{flynn} and are due to the work of Michael J. Flynn in 1966.
+Parallel computer architecture classifications are known as Flynn's taxonomy~\cite{flynn} and are due to the work of Michael J. Flynn in 1966.
 
 Flynn identified the following architectures:
 
@@ -11010,7 +11014,7 @@ Or in other words, looking for the $p(n)$ such that
 \lim_{n\rightarrow\infty} p(n) T_{p(n)}(n) / T_1(n) = const. \ne 0
 \end{equation}
 
-\goodbreak\subsection{Amdahl"s law}\index{Amdahl"s law}
+\goodbreak\subsection{Amdahl's law}\index{Amdahl's law}
 
 Consider an algorithm that can be parallelized, but one fraction $\alpha$ of its total sequential running time $\alpha T_1$ cannot be parallelized. That means that $T_p = \alpha T_1 + (1-\alpha) T_1/p$, and this yields~\cite{admhal}
 
@@ -11434,7 +11438,7 @@ $x^n\log x, n>0$ & $x^{n-1}(n\log x+1)$ \\ \hline
 \bibitem{lorenz} Edward N. Lorenz, ``Deterministic non-periodic flow''. Journal of the Atmospheric Sciences 20 (2) (1963) pp 130–141. DOI:10.1175/1520-0469
 \bibitem{determinism} Ian Hacking, ``19th-century Cracks in the Concept of Determinism'', Journal of the History of Ideas, 44 (3) (1983) pp 455-475 JSTOR:2709176
 \bibitem{decay} F. Cannizzaro, G. Greco, S. Rizzo, E. Sinagra, ``Results of the measurements carried out in order to verify the validity of the poisson-exponential distribution in radioactive decay events''. The International Journal of Applied Radiation and Isotopes 29 (11) (1978) pp 649. DOI:10.1016/0020-708X(78)90101-1
-\bibitem{bits} Yuval Perez, ``Iterating Von Neumann"s Procedure for Extracting Random Bits''. The Annals of Statistics 20 (1) (1992) pp 590–597
+\bibitem{bits} Yuval Perez, ``Iterating Von Neumann's Procedure for Extracting Random Bits''. The Annals of Statistics 20 (1) (1992) pp 590–597
 \bibitem{lusher} Martin Luescher, ``A Portable High-Quality Random Number Generator for Lattice Field Theory Simulations'', Comput. Phys. Commun. 79 (1994) pp 100-110
 \bibitem{randu} \url{http://demonstrations.wolfram.com/PoorStatisticalQualitiesForTheRANDURandomNumberGenerator}
 \bibitem{fishman} G. S. Fishman, ``Grouping observations in digital simulation'', Management Science 24 (1978) pp 510-521
