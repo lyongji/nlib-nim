@@ -8,7 +8,10 @@
 % - rewrite Matrix
 % - dimensional analysis
 
-\title{\LARGE Numerical Algorithms in Nim\\[0.5em]
+% The optional argument is the plain-text title used for the running heads
+% and PDF metadata. Without it the header reuses \title verbatim and the
+% \\[0.5em] line break leaks its optional argument as the literal "[0.5em]".
+\title[Numerical Algorithms in Nim]{\LARGE Numerical Algorithms in Nim\\[0.5em]
        \large Applications in Physics, Biology, Finance}
 
 \author{Massimo Di Pierro}
@@ -167,8 +170,9 @@ Build Date: \today
 \thispagestyle{empty}
 \phantom{placeholder}
 \vspace{2in}
-\hskip 2in
+\begin{flushright}
 {\it to my parents, who taught me everything that matters}
+\end{flushright}
 %\end{center}
 \newpage
 \thispagestyle{empty}
@@ -308,6 +312,29 @@ Nim is interoperable with other ecosystems: an external {\ft db\_sqlite} package
 You can find tutorials, the language manual, and the standard library reference on the official Nim website.
 
 You may skip this chapter if you are already familiar with the Nim language; the rest of the book uses only the constructs introduced here.
+
+\goodbreak\section{Installing Nim}\index{installation}\index{Nix}\index{nix-shell}
+
+There are several ways to obtain a Nim toolchain: official binaries, the {\ft choosenim} version manager, or your operating system's package manager. The approach we recommend, and the one used to develop and typeset this book, is the {\ft Nix} package manager.
+
+Nix is a package manager and build system, available on Linux and macOS, that takes a different approach from conventional tools such as {\ft apt}, {\ft brew}, or {\ft pip}. Instead of mutating a shared system-wide set of installed packages, Nix builds each package in isolation from an explicit description of its inputs and stores the result under a unique path derived from those inputs. Because the inputs fully determine the output, builds are \emph{reproducible}: the same description yields a byte-for-byte equivalent result on any machine, today or years from now. Different versions of the same tool can coexist without conflict, and nothing is installed globally unless you ask for it.
+
+The practical consequence is that you can drop into a temporary shell that has exactly the tools you need, and nothing more, without touching the rest of your system. First install Nix itself with its official one-line installer:
+\begin{lstlisting}
+sh <(curl -L https://nixos.org/nix/install) --daemon
+\end{lstlisting}
+
+Then, to get an environment with the Nim compiler, its package manager, and the {\ft gnuplot} tool used for the figures in this book, run:
+\begin{lstlisting}
+nix-shell -p nim nimble gnuplot
+\end{lstlisting}
+
+This downloads the requested tools (if they are not already in the local store) and opens a new shell in which {\ft nim}, {\ft nimble}, and {\ft gnuplot} are on the {\ft PATH}. You can confirm it works with:
+\begin{lstlisting}
+nim --version
+\end{lstlisting}
+
+When you exit the shell, your system is left exactly as it was before. To make the environment persistent for a project, record the dependencies in a {\ft shell.nix} file so that a bare {\ft nix-shell} reconstructs the same environment for anyone who checks out the code.
 
 \goodbreak\section{The Nim REPL}\index{REPL}\index{inim}
 
@@ -7874,13 +7901,16 @@ When $c$ is set to zero, a linear congruential generator is also called a multip
 
 Modern programming-language standard libraries no longer rely on linear congruential generators, because LCGs --- even with carefully tuned parameters --- exhibit hyperplane patterns in higher dimensions and have relatively short periods. The PRNGs shipped with current language runtimes use different recurrences (XOR/rotate/shift over a small word-aligned state, twisted feedback shift registers, counter-based PRFs, etc.) that pass much stronger empirical tests:
 
+\begin{center}\small
+\setlength{\tabcolsep}{4pt}
 \begin{tabular}{|llrl|} \hline
 Source & Algorithm & State (bits) & Period \\ \hline
-Python {\ft random} & Mersenne Twister (MT19937) & $19\,937$ & $2^{19937}-1$ \\
-C++ {\ft std::mt19937} & Mersenne Twister (MT19937) & $19\,937$ & $2^{19937}-1$ \\
-NumPy (default since 1.17) & PCG64 & $128$ & $2^{128}$ \\
+Python {\ft random} & Mersenne Twister & $19\,937$ & $2^{19937}-1$ \\
+C++ {\ft std::mt19937} & Mersenne Twister & $19\,937$ & $2^{19937}-1$ \\
+NumPy ($\geq$ 1.17) & PCG64 & $128$ & $2^{128}$ \\
 Nim {\ft std/random} & xoroshiro128+ & $128$ & $2^{128}-1$ \\ \hline
 \end{tabular}
+\end{center}
 
 Among these, {\bf xoroshiro128+} (the default of Nim's standard library {\ft std/random} module) is the one we recommend for the Monte Carlo simulations later in this book whenever raw speed matters. It updates a 128-bit state with a handful of XOR, rotate, and shift instructions per draw --- noticeably faster than MT19937 or PCG64 on modern hardware --- and its period of $2^{128}-1$ is more than sufficient for any practical simulation. Cryptography is the one context in which we do {\it not} use it: like the LCGs above, xoroshiro128+ is a statistical generator, not a cryptographically secure one (see the discussion of CSPRNGs later in this section).
 
