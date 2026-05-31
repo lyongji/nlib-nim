@@ -71,14 +71,22 @@
                 uint32, uint64, float, float32, float64, bool, char, void},
   sensitive=true,
   morecomment=[l]{\#},
-  morestring=[b]",
-  morestring=[b]'
+  morecomment=[n]{\#[}{]\#},
+  morestring=[b]"
 }
+% NOTE: we deliberately do NOT declare ' as a string delimiter. In Nim a
+% single quote is used both for char literals ('A') and, more often in this
+% book, for typed numeric literals (1'i64, 0x9d2c5680'u32). Treating ' as a
+% string opener leaves it unterminated on those lines and mis-colors the
+% remainder of the listing. The triple-double-quote case is also avoided.
 \lstset{language=Nim,
-   breaklines=true, basicstyle=\ttfamily\color{black}\footnotesize,
-   keywordstyle=\bf\ttfamily,
-   commentstyle=\it\ttfamily,
-   stringstyle=\color{dg}\it\ttfamily,
+   breaklines=true, breakatwhitespace=true,
+   postbreak=\mbox{\textcolor{dg}{$\hookrightarrow$}\space},
+   basicstyle=\ttfamily\color{black}\footnotesize,
+   keywordstyle=\bfseries\ttfamily,
+   commentstyle=\itshape\ttfamily,
+   stringstyle=\color{dg}\itshape\ttfamily,
+   upquote=true,
    numbers=left, numberstyle=\color{dg}\tiny, stepnumber=1, numbersep=5pt,
    backgroundcolor=\color{lg},
    tabsize=4, showspaces=false,
@@ -118,7 +126,7 @@
 \setlength{\parskip}{2mm}
 {\footnotesize
 \vskip 1in
-Copyright 2013 by Massimo Di Pierro. All rights reserved.
+Copyright 2026 by Massimo Di Pierro. All rights reserved.
 \vskip 1cm
 
 THE CONTENT OF THIS BOOK IS PROVIDED UNDER THE TERMS OF THE CREATIVE COMMONS PUBLIC LICENSE BY-NC-ND 3.0.
@@ -149,11 +157,8 @@ Massimo Di Pierro
 Email: massimo.dipierro@gmail.com
 \end{verbatim}
 
-Library of Congress Cataloging-in-Publication Data: \\ \\
-ISBN: XXX \\
 Build Date: \today
 }
-
 
 \newpage
 %\begin{center}
@@ -163,7 +168,7 @@ Build Date: \today
 \phantom{placeholder}
 \vspace{2in}
 \hskip 2in
-{\it to my son}
+{\it to my parents, who taught me everything that matters}
 %\end{center}
 \newpage
 \thispagestyle{empty}
@@ -178,7 +183,7 @@ Build Date: \today
 
 \goodbreak\chapter{Introduction}
 
-This is a port to the Nim language of a previous edition of this book from the same author. The original version of this book was in Python and was titled ``Annotated Algorithms in Python''. It was assembled from lectures given by the author over a period of 10 years at the School of Computing of DePaul University. The lectures cover multiple classes, including Analysis and Design of Algorithms, Scientific Computing, Monte Carlo Simulations, and Parallel Algorithms. These lectures teach the core knowledge required by any scientist interested in numerical algorithms and by students interested in computational finance.
+This is a port to the Nim language of a previous edition of this book from the same author. The original version of this book was in Python and was titled ``Annotated Algorithms in Python''. It was assembled from lectures given by the author over a period of 10 years at the School of Computing of DePaul University. The lectures cover multiple classes, including Analysis and Design of Algorithms, Scientific Computing, and Monte Carlo Simulations. These lectures teach the core knowledge required by any scientist interested in numerical algorithms and by students interested in computational finance.
 
 We chose Nim because its syntax closely resembles that of Python, making the transition from the original edition natural for readers already familiar with Python, while at the same time Nim is as fast as the C language. This combination makes Nim a good choice for the development of scientific applications that does not compromise on performance. Over time the author has started to appreciate and love the syntax of Nim, its build speed, and its running speed.
 
@@ -232,8 +237,6 @@ We use this to estimate the error on the average in a Monte Carlo computation. I
 
 The third idea is that the time it takes to run an iterative algorithm is proportional to the number of iterations. It is therefore our goal to minimize the number of iterations required to reach a target precision. We develop a language to compare algorithms based on their running time and classify algorithms into categories. This is useful to choose the best algorithm based on the problem at hand.
 
-In the chapter on parallel algorithms, we learn how to distribute those iterations over multiple parallel processes and how to break individual iterations into independent steps that can be executed concurrently on parallel processes, to reduce the total time required to obtain a solution within a given target precision. In the parallel case, the running time acquires an overhead that depends on the communication patterns between the parallel processes, the communication latency, and bandwidth.
-
 In the ultimate analysis, we can even try to understand ourselves as a parallel machine that models the input from the world by approximations. The brain is a graph that can be modeled by a neural network. The learning process is an ongoing optimization process in which the brain adjusts its synapses to produce better and better responses. The decision process mimics a search tree. We solve problems by searching for the most similar problems that we have encountered before, then we refine the solution. Our DNA is a code that evolved to efficiently compress the information necessary to grow us from a single cell into a complex being. We evolved according to evolutionary mechanisms that can be modeled using genetic algorithms. We can find our similarities with other organisms using the longest common subsequence algorithm. We can reconstruct our evolutionary tree using shortest-path algorithms and find out how we came to be.
 
 \section{About Nim}
@@ -254,7 +257,6 @@ This book is divided into the following chapters:
 \item In chapter 5, we provide a review of probability and statistics and implement basic procedures to perform statistical analysis of random variables.
 \item In chapter 6, we discuss algorithms to generate random numbers from many distributions. Nim's {\ft std/random} module provides high-quality uniform and Gaussian generators, and in subsequent chapters we use it, yet in this chapter we discuss in detail how pseudo random number generators work and their pitfalls.
 \item In chapter 7, we write about Monte Carlo simulations. This is a numerical technique that utilizes random numbers to solve otherwise deterministic problems. For example, in chapter 4, we talk about numerical integration in one dimension. Those algorithms can be extended to perform numerical integration in a few (two, three, sometimes four) dimensions, but they fail for very large numbers of dimensions. That is where Monte Carlo integration comes to our rescue, as it increasingly becomes the integration method of choice as the number of variables increases. We present applications of Monte Carlo simulations.
-\item In chapter 8, we discuss parallel algorithms. There are many paradigms for parallel programming these days, and the tendency is toward inhomogeneous architectures. Although we review many different types of architectures, we focus on two programming paradigms that have been very successful: message-passing and map-reduce. We build a small ``parallel simulator'' ({\ft PSim}) on top of Nim's threadpool and channels, which lets us experiment with different network topologies and message-passing patterns on a single machine.
 
 \item Finally, in the appendix, we provide a compendium of useful formulas and definitions.
 \end{itemize}
@@ -862,7 +864,6 @@ The standard library lives under the {\ft std/} prefix. The modules used in the 
 {\ft std/json}        & JSON parsing and generation \\ \hline
 {\ft std/os}          & file-system path manipulation, environment \\ \hline
 {\ft std/times}       & {\ft epochTime}, {\ft now} \\ \hline
-{\ft std/threadpool}  & {\ft spawn}, {\ft sync}, {\ft Channel} \\ \hline
 \end{tabular}
 
 \goodbreak\section{Exceptions}
@@ -1155,8 +1156,6 @@ Given $f(n) = n\log n+3n$ and $g(n) = n^2$
 \end{equation}
 we conclude that $n\log n+3n$ is in $O(n^2)$.
 
-
-
 Given an algorithm $A$ that acts on input of size $n$, we say that the algorithm is $O(g(n))$ if its worst running time as a function of $n$ is in $O(g(n))$. Similarly, we say that the algorithm is in $\Omega(g(n))$ if its best running time is in $\Omega(g(n))$. We also say that the algorithm is in $ \Theta(g(n))$ if both its best running time and its worst running time are in  $\Theta(g(n))$.
 
 More formally, we can write the following:
@@ -1181,7 +1180,6 @@ proc findMinimum[T](a: openArray[T]): T =
     if element < result:
       result = element
 \end{lstlisting}
-
 
 To compute the running time in the worst case, we assume that the maximum number of computations is performed. That happens when the if statements are always {\ft True}. To compute the best running time, we assume that the minimum number of computations is performed. That happens when the if statement is always {\ft False}.
 Under each of the two scenarios, we compute the running time by counting how many times the most nested operation is performed.
@@ -1592,7 +1590,6 @@ sub-instances are explicitly solved first and the results of these are used to
 construct solutions to progressively larger sub-instances. In contrast, we
 say that the divide-and-conquer is a top-down technique.
 
-
 We can refactor the {\ft mergesort} algorithm to eliminate recursion in the algorithm implementation, while keeping the logic of the algorithm unchanged. Here is a possible implementation:
 \begin{lstlisting}
 proc mergesortNonrecursive*[T](a: var seq[T]) =
@@ -1746,7 +1743,6 @@ proc memoizePersistent*[K, V](f: proc(self: proc(x: K): V, x: K): V,
 
 We can use it as we did before, but we can now start and stop the program, and as long as it has access to the ``memoize.json'' file, the cache will persist across runs.
 
-
 \goodbreak\section{Timing algorithms}
 
 The order of growth is a theoretical concept. In practice, we need to time algorithms to check if findings are correct and, more important, to determine the magnitude of the constants in the $T$ functions.
@@ -1759,7 +1755,6 @@ proc f1(n: int): int =
 proc f2(n: int): int =
   for x in 0 ..< n * n: result += g2(x)
 \end{lstlisting}
-
 
 Since {\ft f1} is $\Theta(n)$ and {\ft f2} is $\Theta(n^2)$, we may be led to conclude that the latter is slower. It may very well be that {\ft g1} is $10^6$ smaller than {\ft g2} and therefore $T_{f1}(n) = c_1 n$, $T_{f2}(n) = c_2 n^2$, but if $c_1 = 10^6 c_2$, then $T_{f1}(n) > T_{f2}(n)$ when $n<10^6$.
 
@@ -1885,7 +1880,6 @@ echo stk.pop()    # "Three"
 echo stk.pop()    # "One"
 \end{lstlisting}
 
-
 \goodbreak\subsection{Queue}
 
 A queue data structure is similar to a stack but, whereas the stack returns the most recent item added, a queue returns the oldest item in the list.  This is commonly called first-in, first-out, or FIFO.  Using a {\ft seq} as a queue, we can insert each new element at the front:
@@ -1912,7 +1906,6 @@ que.addLast "Three"
 echo que.popFirst()    # "Two"
 echo que.popFirst()    # "Three"
 \end{lstlisting}
-
 
 \goodbreak\subsection{Sorting}
 
@@ -2207,7 +2200,6 @@ echo root.left.value    # "bbb"
 echo root[3]            # "bbb"
 echo root.max()         # (8, "ccc")
 \end{lstlisting}
-
 
 \goodbreak\subsection{Other types of trees}
 
@@ -2670,7 +2662,6 @@ T_{memory} &\in &\Theta (n_E)
 
 An application of the Dijkstra is in solving a maze such as the one built when discussing disjoint sets. To use the Dijkstra algorithm, we need to generate a maze, take the links representing torn-down walls, and use them to build an undirected graph. This is done by symmetrizing the links (if $i$ and $j$ are connected, $j$ and $i$ are also connected) and adding to each link a length (1, because all links connect next-neighbor cells):
 
-
 \begin{lstlisting}
 let (n, d) = (4, 2)
 let (mazeWalls, tornDown) = makeMaze(n, d)
@@ -2937,7 +2928,6 @@ echo lcs(a, b)
 \index{Needleman--Wunsch}\index{global alignment}
 
 With some minor changes to the LCS algorithm, we obtain the Needleman--Wunsch algorithm~\cite{needleman}, which solves the problem of {\it global sequence alignment}. The changes are that, instead of using only two alternating rows ({\ft c} and {\ft d} for storing the temporary results, we store all temporary results in an array {\ft z}; when two matching symbols are found and they are not consecutive, we apply a penalty equal to $p^m$, where $m$ is the distance between the two matches and is also the size of the gap in the matching subsequence:
-
 
 %%% META:FILE:nlib/text.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/text.nim}}]
@@ -3767,7 +3757,6 @@ We say that a problem characterized by a function $f$ is well conditioned in a d
 
 In this book, we are mostly concerned with stable (well-conditioned) problems. If a problem is well-conditioned for all input in a domain, it is also stable.
 
-
 \goodbreak\section{Approximations and error analysis}
 
 \index{error analysis}
@@ -3807,7 +3796,6 @@ Computational error includes two parts systematic error and statistical error.
 \end{equation}
 The first term is the computational error (we use $f_n$ instead of the true $f$), and the second term is the propagated data error ($\delta x$, the uncertainty in $x$, propagates through $f_n$).
 \end{itemize}
-
 
 \goodbreak\subsection{Error propagation}
 
@@ -3867,7 +3855,6 @@ Here are some examples of each of the strategies.
 
 Consider a ball in a one-dimensional box of size $L$, and let $x$ be the position of the ball in the box. Instead of treating $x$ as a continuous variable, we can assume a finite resolution of $h = L/n$ (where $h$ is the minimum distance we can distinguish without instruments and $n$ is the maximum number of distinct discrete points we can discriminate), and set $x \equiv h i$, where $i$ is an integer in between $0$ and $n$; $x=0$ when $i=0$ and $x=L$ when $i=n$.
 
-
 \goodbreak\subsection{Replace derivatives with finite differences}
 
 \index{derivative}\index{finite differences}
@@ -3917,7 +3904,6 @@ where $O(h)$ indicates a correction that, at most, is proportional to $h$.
 The three definitions are equivalent for functions that are differentiable in $x$, and the latter is preferable because it is more symmetric.
 
 Notice that even more definitions are possible as long as they agree in the limit $h\rightarrow 0$. Definitions that converge faster as $h$ goes to zero are referred to as ``improvement.''
-
 
 \index{functional}
 
@@ -4009,7 +3995,6 @@ for i in 0 .. 10:
 
 Notice that the third column $s = x - x^3/6$ is very close to $\sin(x)$. In fact, the difference is less than one part in 10, 000 (fourth column). Therefore, for $x \in [-1, +1]$, it is possible to replace the $sin(x)$ function with the $x-x^3/6$ polynomial. Here we just went one step further in the Taylor expansion, replacing the first order with the third order. The error committed in this approximation is very small.
 
-
 \goodbreak\subsection{Transform a problem into a different one}
 
 Continuing with the previous example, the polynomial approximation for the sin function works when $x$ is smaller than $1$ but fails when $x$ is greater than or equal to $1$. In this case, we can use the following relations to reduce the computation of $\sin(x)$ for large $x$ to $\sin(x)$ for $0<x<1$. In particular, we can use
@@ -4075,7 +4060,6 @@ proc mysin(x: float): float =
 \end{lstlisting}
 
 Where do these formulas come from? How do we decide how many iterations we need? We address these problems in the next section.
-
 
 \goodbreak\subsection{Taylor series}
 
@@ -4353,7 +4337,6 @@ In the preceding code,
 \end{itemize}
 From now on, we will adopt this naming convention.
 
-
 Consider, for example, a financial algorithm that outputs a dollar amount. If it converges to a number very close to $1$ or $0$, the concept of relative precision loses significance for a result equal to zero, and the algorithm never detects convergence. In this case, setting an absolute precision of \$1 or 1c is the right thing to do. Conversely, if the algorithm converges to a very large dollar amount, setting a precision of \$1 or 1c may be a too strong requirement, and the algorithm will take too long to converge. In this case, setting a relative precision of 1\% or 0.1\% is the correct thing to do.
 
  Because in general we do not know in advance the output of the algorithm, we should use both stopping conditions. We should also detect which of the two conditions causes the algorithm to stop looping and return, so that we can estimate the uncertainty in the result.
@@ -4584,7 +4567,6 @@ echo b + 2.0        # @[@[3.0], @[4.0], @[5.0]]
 
 For complex matrices we would parameterize {\ft Matrix} on a numeric type {\ft T} (e.g., {\ft Matrix[Complex]}). For brevity, the implementation in this book uses {\ft float} only; extending it to a generic element type is a straightforward exercise.
 
-
 \index{matrix!multiplication}\index{scalar product}
 Now we implement multiplication. We are interested in three types of multiplication: multiplication of a scalar by a matrix, multiplication of a matrix by a matrix, and scalar product between two vectors:
 
@@ -4624,7 +4606,6 @@ echo A * A          # matrix * matrix    @[@[7.0, 10.0], @[15.0, 22.0]]
 let b = newMatrix(@[1.0, 2.0, 3.0])
 echo b * b          # scalar product (returns 1x1 matrix containing 14)
 \end{lstlisting}
-
 
 \goodbreak\subsection{Examples of linear transformations}
 
@@ -5187,7 +5168,6 @@ and risk
 
 We can determine $\alpha$ by deciding how much risk we are willing to take, and these formulas tell us the optimal portfolio for that amount of risk.
 
-
 \goodbreak\subsection{Linear least squares, $\chi^2$}
 
 \index{linear least squares}\index{$\chi^2$}\index{fitting}\index{Regression}
@@ -5481,7 +5461,6 @@ $D$ is a diagonal matrix with eigenvalues on the diagonal $D_{ii} = e_i$ and
 $U$ is a matrix whose column $i$ is the $\mathbf{x}_i$ eigenvalue.
 
 The following algorithm is called the Jacobi algorithm. It takes as input a symmetric matrix $A$ and returns the matrix $U$ and a list of corresponding eigenvalues $e$, sorted from smallest to largest:
-
 
 %%% META:FILE:nlib/linalg.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/linalg.nim}}]
@@ -6829,7 +6808,6 @@ echo antitransform(v, b)
 
 Of course, this example is trivial because of the choice of basis which makes $v$ the same as $u$. Yet our argument works for any basis $\mathbf{b}_i$. In particular, we can make the following choice:
 
-
 \begin{equation}
 b_{ji} = \frac{1}{\sqrt{2\pi}} e^{2\pi I ij/N}
 \end{equation}
@@ -6885,7 +6863,6 @@ v_j &=& N^{-\frac12} \sum_i u_{2i} e^{2\pi I (2i)j/N} + \\
 where $v_j^{even}$ is the Fourier transform of the even terms and $v_j^{odd}$ is the Fourier transform of the odd terms.
 
 The preceding recursive expression can be implemented using dynamic programming, thus obtaining
-
 
 \begin{lstlisting}
 import std/complex
@@ -7163,7 +7140,6 @@ Not surprisingly, we find that {\ft Prob\_conditional([6], [6], S)} produces the
 
 In fact, we say that two sets of events $A$ and $B$ are independent if and only if $\textrm{P}(A|B) = \textrm{P}(A)$.
 
-
 \goodbreak\subsection{Discrete random variables}
 \index{discrete random variable}\index{expectation value}
 
@@ -7382,7 +7358,6 @@ E[\sum_ia_iX_i] &=&\sum_ia_iE[X_i] \\
 E[(\sum_iX_i)^2] &=&\sum_iE[X_i^2]
 \end{eqnarray}
 
-
 We can define covariance and correlation for discrete distributions:
 %%% META:FILE:nlib/stats.nim
 \begin{lstlisting}[caption={in file: {\ft nlib/stats.nim}}]
@@ -7474,8 +7449,6 @@ In this case, statistical error in the mean is given by
 \label{error}
 \end{equation}
 where $\sigma ^2=E[(X-\mu )^2]=\frac 1N\Sigma _i(X_i-\mu )^2$.
-
-
 
 \goodbreak\section{Combinatorics and discrete random variables}
 \index{combinatorics}
@@ -7610,9 +7583,6 @@ therefore the probability that it is red is
 \textrm{Prob}(red)=\frac{24}{24+26}=\frac{12}{25}
 \end{equation}
 \end{itemize}
-
-
-
 
 \chapter{Random Numbers and Distributions}
 
@@ -7824,8 +7794,6 @@ Pseudo random numbers are relatively easy to generate with software, and they
 provide a practical alternative to random numbers. For some applications,
 this is adequate.
 
-
-
 \goodbreak\subsection{Linear congruential generator}
 
 Here is probably the simplest possible pseudo random number generator:
@@ -7870,7 +7838,6 @@ The output numbers ``look'' random but are not truly random. Running the same co
 x_{i-1}$, produces $x_i$.
 
 \index{seed}
-
 
 \item  PRNGs have to start from an initial value, $x_0$, called the {\it seed}.
 A typical choice is to set the seed equal to the number of seconds from the
@@ -8078,7 +8045,6 @@ x_i=(ax_{i-1}^{-1}+c)\textrm{mod}m
 
 where $x_{i-1}^{-1}$ is the multiplicative inverse of $x_{i-1}$ modulo $m$,
 for example, $x_{i-1}x_{i-1}^{-1}=1\textrm{mod}m$.
-
 
 \goodbreak\subsection{Mersenne twister}
 
@@ -8521,7 +8487,6 @@ proc discreteMap*[K](fy: FishmanYarberry[K], u: float): K =
   fy.table[j][0]
 \end{lstlisting}
 
-
 \goodbreak\subsection{Binomial distribution}
 
 \index{distribution!binomial}
@@ -8587,7 +8552,6 @@ proc binomial*(r: RandomSource, n: int, p: float,
     q = q * float(n - k) / float(k + 1) * p / (1.0 - p)
   raise newException(ArithmeticDefect, "invalid probability")
 \end{lstlisting}
-
 
 \goodbreak\subsection{Negative binomial distribution}
 
@@ -8971,7 +8935,6 @@ proc confidenceIntervals*(mu, sigma: float): seq[(float, float, float)] =
     result.add (a, mu - b * sigma, mu + b * sigma)
 \end{lstlisting}
 
-
 \goodbreak\subsection{Pareto distribution}
 \index{distribution!pareto}
 
@@ -9308,7 +9271,6 @@ of computing an integral.
 
 Sometimes the formula is not known, or it is too complex to compute reliably, hence a Monte Carlo solution becomes preferable.
 
-
 \goodbreak\subsection{Simulating an online merchant}
 
 Let's consider an online merchant. A website is visited many times a day.
@@ -9574,7 +9536,6 @@ We can answer the first questions (the average total loss) simply multiplying th
 
 To answer the second question, we would need to study the width of the distribution. The problem is that, for $\alpha=1.5$, the standard deviation of the Pareto distribution is infinity, and analytical methods do not apply. We can do it using a Monte Carlo simulation:
 
-
 %%% META:FILE:risk.nim
 \begin{lstlisting}[caption={in file: {\ft risk.nim}}]
 import nlib
@@ -9615,7 +9576,6 @@ This produces the following output:
 The output of {\ft simulate\_many} should be compatible with the true result (defined as the result after an infinite number of iterations and at infinite precision) within the estimated statistical error.
 
 The output of the {\ft var} function answers our second questions: We have to save \$45, 705, 881 to make sure that in 95\% of cases our losses are covered by the savings.
-
 
 \subsection{Network reliability}
 \index{network reliability}
@@ -10123,7 +10083,6 @@ C_{call}=e^{-r\tau }\int_{-\infty }^{+\infty }\max (x-A, 0)p_\tau (x)dx
 \label{call_option}
 \end{equation}
 
-
 Similarly, we can perform the same computations for a put option. A put option gives the buyer the option to sell the asset on a given day at a fixed price. This is an insurance against the price going down instead of going up. The value of this option at expiration is
 
 \begin{equation}
@@ -10481,7 +10440,6 @@ for x in metropolisDecorrelate(P, Q, @[0.0, 0.0]):
   if i == 100: break
 \end{lstlisting}
 
-
 \subsection{The Ising model}
 \index{Ising model}
 
@@ -10578,7 +10536,6 @@ proc main*(name = "ising.png") =
 
 main()
 \end{lstlisting}
-
 
 A note on the code: the variable named {\ft dE} actually stores $-\Delta E$ rather than $\Delta E$, because that is the quantity that appears directly in the acceptance test {\ft dE > t * ln(rand(1.0))} (which is the rearrangement of $\xi < \exp(-\Delta E / k_B T)$ derived above). After accepting a flip, the magnetization is updated incrementally with {\ft magnetization += 2 * ising[x, y, z]}: by the time this line runs the spin has already been flipped, so the increment $2 s_i^{\rm new} = -2 s_i^{\rm old}$ is exactly the change in $\sum_i s_i$. Updating the magnetization incrementally avoids re-summing the entire lattice on every accepted move and is essential to keep each Metropolis step $O(1)$.
 
@@ -10711,318 +10668,6 @@ This is the well-known {\it HP lattice model}, introduced by Ken Dill in 1985~\c
 The {\ft move} procedure dispatches on the solid-angle code {\ft 0..5} and maps a cell {\ft (x, y, z)} to the coordinates of the neighboring cube in that direction.
 
 The annealing procedure is performed in the {\ft main} function. The {\ft fold} procedure is one Metropolis step. The purpose of the {\ft while} loop inside {\ft fold} is to draw a valid trial folding for the accept--reject step. Some trials are invalid because they are not physical: they would require two amino-acids to occupy the same lattice cell (a self-avoiding-walk violation). When this happens, {\ft computeFolding} returns an empty {\ft Table}, and the loop tries again with a different randomly perturbed angle.
-
-\chapter{Parallel Algorithms}
-\index{parallel algorithms}
-
-Consider a program that performs the following computation:
-\begin{lstlisting}
-y = f(x)
-z = g(x)
-\end{lstlisting}
-In this example, the function $g(x)$ does not depend on the result of the function $f(x)$, and therefore the two functions could be computed independently and in parallel.
-
-Often large problems can be divided into smaller computational problems, which can be solved concurrently (``in parallel'') using different processing units (CPUs, cores). This is called {\it parallel computing}. Algorithms designed to work in parallel are called {\it parallel algorithms}.
-
-In this chapter, we will refer to a processing unit as a node and to the code running on a node as a process. A parallel program consists of many processes running on as many nodes. It is possible for multiple processes to run on one and the same computing unit (node) because of the multitasking capabilities of modern CPUs, but that is not true parallel computing. We will use an emulator, {\ft PSim}, which does exactly that.
-
-Programs can be parallelized at many levels: bit level, instruction level, data, and task parallelism. Bit-level parallelism is usually implemented in hardware. Instruction-level parallelism is also implemented in hardware in modern multi-pipeline CPUs.  Data parallelism is usually referred to as SIMD. Task parallelism is also referred to as MIMD.
-
-Historically, parallelism was found in applications in high-performance computing, but today it is employed in many devices, including common cell phones. The reason is heat dissipation. It is getting harder and harder to improve speed by increasing CPU frequency because there is a physical limit to how much we can cool the CPU. So the recent trend is keeping frequency constant and increasing the number of processing units on the same chip.
-
-Parallel architectures are classified according to the level at which the hardware supports parallelism, with multicore and multiprocessor computers having multiple processing elements within a single machine, while clusters, MPPs, and grids use multiple computers to work on the same task. Specialized parallel computer architectures are sometimes used alongside traditional processors for accelerating specific tasks.
-
-Optimizing an algorithm to run on a parallel architecture is not an easy task. Details depend on the type of parallelism and details of the architecture.
-
-In this chapter, we will learn how to classify architectures, compute running times of parallel algorithms, and measure their performance and scaling.
-
-We will learn how to write parallel programs using standard programming patterns, and we will use them as building blocks for more complex algorithms.
-
-For some parts of this chapter, we will use a simulator called {\ft PSim}, written in Nim on top of {\ft std/threadpool} and {\ft std/locks}. Its performance will only scale on multicore machines, but it allows us to emulate various network topologies on a single host.
-
-\section{Parallel architectures}
-
-\goodbreak\subsection{Flynn taxonomy}
-
-\index{parallel architectures}\index{Flynn classification}\index{SISD}\index{SIMD}\index{MIMD}
-
-
-Parallel computer architecture classifications are known as Flynn's taxonomy~\cite{flynn} and are due to the work of Michael J. Flynn in 1966.
-
-Flynn identified the following architectures:
-
-\begin{itemize}
-\item {\bf Single instruction, single data stream (SISD)}
-
-A sequential computer that exploits no parallelism in either the instruction or data streams. A single control unit (CU) fetches a single instruction stream (IS) from memory. The CU then generates appropriate control signals to direct single processing elements (PE) to operate on a single data stream (DS), for example, one operation at a time.
-
-Examples of SISD architecture are the traditional uniprocessor machines like a PC (currently manufactured PCs have multiple processors) or old mainframes.
-
-\item {\bf Single instruction, multiple data streams (SIMD)}
-A  computer  that   exploits   multiple  data   streams   against  a  single instruction stream  to perform operations that  may be naturally parallelized (e.g., an array processor or GPU).
-
-\item {\bf Multiple instruction, single data stream (MISD)}
-
-Multiple instructions operate on a single data stream. This is an uncommon architecture that is generally used for fault tolerance. Heterogeneous systems operate on the same data stream and must agree on the result. Examples include the now retired Space Shuttle flight control computer.
-
-\item {\bf Multiple instruction, multiple data streams (MIMD)}
-Multiple autonomous processors simultaneously executing different instructions on different data. Distributed systems are generally recognized to be MIMD architectures, either exploiting a single shared memory space (using threads) or a distributed memory space (using a message-passing protocol such as MPI).
-\end{itemize}
-
-\index{SPMD}\index{MPMD}
-
-MIMD can be further subdivided into the following:
-\begin{itemize}
-
-\item {\bf Single program, multiple data (SPMD)}
-Multiple autonomous processors simultaneously executing the same program but at independent points not synchronously (as in the SIMD case). SPMD is the most common style of parallel programming.
-
-\item {\bf Multiple program, multiple data (MPMD)}
-Multiple autonomous processors simultaneously operating at least two independent programs. Typically such systems pick one node to be the ``host'' (``the explicit host/node programming model'') or ``manager'' (the ``manager--worker'' strategy), which runs one program that farms out data to all the other nodes, which all run a second program. Those other nodes then return their results directly to the manager. The Map-Reduce pattern also falls under this category.
-\end{itemize}
-
-An embarrassingly parallel workload (or embarrassingly parallel problem) is one for which little or no effort is required to separate the problem into a number of parallel tasks. This is often the case where there exists no dependency (or communication) between those parallel tasks.
-
-The manager--worker node strategy, when workers do not need to communicate with each other, is an example of an ``embarrassingly parallel'' problem.
-
-
-\goodbreak\subsection{Network topologies}
-
-\index{network topologies}\index{switch network}\index{bus network}\index{mesh network}\index{hypercube network}\index{tree network}
-
-In the MIMD case, multiple copies of the same problem run concurrently (on different data subsets and branching differently, thus performing different instructions) on different processing units, and they exchange information using a network. How fast they can communicate depends on the network characteristics identified by the network topology and the latency and bandwidth of the individual links of the network.
-
-Normally we classify network topologies based on the following taxonomy:
-
-\begin{itemize}
-\item {\bf Completely connected:}
-Each node is connected by a directed link to each other node.
-\item {\bf Bus topology:}
-All nodes are connected to the same single cable. Each computer can therefore communicate with each other computer using one and the same bus cable. The limitation of this approach is that the communication bandwidth is limited by the bandwidth of the cable. Most bus networks only allow two machines to communicate with each other at one time (with the exception of one too many broadcast messages). While two machines communicate, the others are stuck waiting.
-The bus topology is the most inexpensive but also slow and constitutes a single point of failure.
-\item {\bf Switch topology (star topology):}
-In local area networks with a switch topology, each computer is connected via a direct link to a central device, usually a switch, and it resembles a star. Two computers can communicate using two links (to the switch and from the switch). The central point of failure is the switch. The switch is usually intelligent and can reroute the messages from any computer to any other computer. If the switch has sufficient bandwidth, it can allow multiple computers to talk to each other at the same time. For example, for a 10 Gbit/s links and an 80 Gbit/s switch, eight computers can talk to each other (in pairs) at the same time.
-\item {\bf Mesh topology:}
-In a mesh topology, computers are assembled into an array (1D, 2D, etc.), and each computer is connected via a direct link to the computers immediately close (left, right, above, below, etc.). Next neighbor communication is very fast because it involves a single link and therefore low latency. For two computers not physically close to communicate, it is necessary to reroute messages. The latency is proportional to the distance in links between the computers. Some meshes do not support this kind of rerouting because the extra logic, even if unused, may be cause for extra latency. Meshes are ideal for solving numerical problems such as solving differential equations because they can be naturally mapped into this kind of topology.
-\item {\bf Torus topology:}
-Very similar to a mesh topology (1D, 2D, 3D, etc.), except that the network wraps around the edges. For example, in one dimension node, $i$ is connected to $(i+1) \% p$, where $p$ is the total number of nodes. A one-dimensional torus is called a {\it ring network}.
-\item {\bf Tree network:}
-The tree topology looks like a tree where the computer may be associated with every tree node or every leaf only. The tree links are the communication link. For a binary tree, each computer only talks to its parent and its two children nodes. The root node is special because it has no parent node.
-
-Tree networks are ideal for global operations such as broadcasting and for sharing IO devices such as disks. If the IO device is connected to the root node, every other computer can communicate with it using only $\log p$ links (where $p$ is the number of computers connected). Moreover, each subset of a tree network is also a tree network. This makes it easy to distribute subtasks to different subsets of the same architecture.
-
-\item{\bf Hypercube:}
-This network assumes $2^d$ nodes, and each node corresponds to a vertex of a hypercube. Nodes are connected by direct links, which correspond to the edges of the hypercube. Its importance is more academic than practical, although some ideas from hypercube networks are implemented in some algorithms.
-\end{itemize}
-
-If we identify each node on the network with a unique integer number called its rank, we write explicit code to determine if two nodes $i$ and $j$ are connected for each network topology:
-
-\index{PSim emulator}
-
-%%% META:FILE:psim.nim
-\begin{lstlisting}[caption={in file: {\ft psim.nim}}]
-import std/math
-
-type Topology* = proc(i, j: int): bool
-
-proc BUS*(): Topology = (proc(i, j: int): bool = true)
-proc SWITCH*(): Topology = (proc(i, j: int): bool = true)
-
-proc MESH1*(p: int): Topology =
-  result = proc(i, j: int): bool = (i - j) * (i - j) == 1
-
-proc TORUS1*(p: int): Topology =
-  result = proc(i, j: int): bool =
-    ((i - j + p) mod p == 1) or ((j - i + p) mod p == 1)
-
-proc MESH2*(p: int): Topology =
-  let q = int(sqrt(float(p)) + 0.1)
-  result = proc(i, j: int): bool =
-    let dx = (i mod q - j mod q) * (i mod q - j mod q)
-    let dy = (i div q - j div q) * (i div q - j div q)
-    (dx, dy) in [(1, 0), (0, 1)]
-
-proc TORUS2*(p: int): Topology =
-  let q = int(sqrt(float(p)) + 0.1)
-  result = proc(i, j: int): bool =
-    ((i mod q - j mod q + q) mod q,
-     (i div q - j div q + q) mod q) in [(0, 1), (1, 0)] or
-    ((j mod q - i mod q + q) mod q,
-     (j div q - i div q + q) mod q) in [(0, 1), (1, 0)]
-
-proc TREE*(): Topology =
-  result = proc(i, j: int): bool =
-    i == (j - 1) div 2 or j == (i - 1) div 2
-\end{lstlisting}
-
-\goodbreak\subsection{Network characteristics}
-
-\index{diameter of network}\index{bisection width}\index{arc connectivity}
-
-\begin{itemize}
-\item {\bf Number of links}
-
-\item {\bf Diameter:} The max distance between any two nodes measured as a minimum number of links connecting them. Smaller diameter means smaller latency. The diameter is proportional to the maximum time it takes for a message go from one node to another.
-
-\item {\bf Bisection width:} The minimum number of links one has to cut to turn the network into two disjoint networks. Higher bisection width means higher reliability of the network.
-
-\item {\bf Arc connectivity:} The number of different paths (non-overlapping and of minimal length) connecting any two nodes. Higher connectivity means higher bandwidth and higher reliability.
-\end{itemize}
-
-Here are values of this parameter for each type of network:
-
-\begin{tabular}{|l|lll|} \hline
-Network              & Links & Diameter & Width \\ \hline
-completely connected & $p(p-1)/2$   & $1$   & $p-1$ \\
-switch               & $p$          & $2$   & $1$ \\
-1D mesh              & $p-1$        & $p-1$ & $1$ \\
-nD mesh              & $n(p^{\frac1n}-1)p^{\frac{n-1}n}$ & $n$ & $p^{\frac23}$ \\
-1D torus             & $p$          & $\frac{p}2$ & $2$ \\
-nD torus             & $np$         & $\frac{n}2 p^{\frac1n}$ & $2n$ \\
-hypercube            & $\frac{p}2 \log_2 p$ & $\log_2 p$ & $log_2 p$ \\
-tree                 & $p-1$        & $\log_2 p$ & $1$ \\ \hline
-\end{tabular}
-
-\begin{figure}[ht]
-\centering\includegraphics[width=4in]{images/network_topologies.png}
-\caption{Examples of network topologies.}
-\end{figure}
-
-Most actual supercomputers implement a variety of taxonomies and topologies simultaneously. A modern supercomputer has many nodes, each node has many CPUs, each CPU has many cores, and each core implements SIMD instructions. Each core has it own cache, each CPU has its own cache, and each node has its own memory shared by all threads running on that one node. Nodes communicate with each other using multiple networks (typically a multidimensional mesh for point-to-point communications and a tree network for global communication and general disk IO).
-
-This makes writing parallel programs very difficult. Parallel programs must be optimized for each specific architecture.
-
-\goodbreak\section{Parallel metrics}
-
-\goodbreak\subsection{Latency and bandwidth}
-
-\index{latency}\index{bandwidth}
-
-The time it takes for a message of size $m$ (in bytes) over a wire can be broken into two components: a fixed overall time that does not depend on the size of the message, called {\it latency} (and indicated with $t_s$), and a time proportional to the message size, called {\it inverse bandwidth} (and indicated with $t_w$).
-
-Think of a pipe of length $L$ and section $s$, and you want to pump $m$ liters of water through the pipe at velocity $v$. From the moment you start pumping, it takes $L/v$ seconds before the water starts arriving at the other end of the pipe. From that moment, it will take $m / sv$ for all the water to arrive at its destination. In this analogy, $L/v$ is the latency $t_s$, $sv$ is the bandwidth, and $t_w = 1/sv$.
-
-The total time to send the message (or the water) is
-
-\begin{equation}
-T(m) = t_s + t_w m
-\end{equation}
-
-From now on, we will use $T_1(n)$ to refer to the nonparallel running time of an algorithm as a function of its input $m$. We will use $T_p(n)$ to refer to its running time with $p$ parallel processes.
-
-As a practical case, in the following example, we consider a generic algorithm with the following parallel and nonparallel running times:
-
-\begin{eqnarray}
-T_1(n) &=& t_a n^2 \\
-T_p(n) &=& t_a n^2 / p + 2p (t_s+t_w n/p)
-\end{eqnarray}
-
-These formulas may come for example from the problem of multiplying a matrix times a vector.
-
-Here $t_a$ is the time to perform one elementary instruction; $t_s$ and $t_w$ are the latency and inverse bandwidth. The first term of $T_p$ is nothing but $T_1/p$, while the second term is an overhead due to communications.
-
-Typically $t_s >> t_w >> t_a$. In the following plots, we will always assume $t_a=1$, $t_s=0.2$, and $t_w=0.1$. With these assumptions, fig.~\ref{Tp} shows how $T_p$ changes with input size and number of parallel processes. Notice that while for small $p$, $T_p$ decreases $\propto 1/p$, for large $p$, the communication overhead dominates over computation. This overhead is our example and is dominated by the latency contribution, which grows with $p$.
-
-\begin{figure}[ht]
-\centering\includegraphics[width=4in]{images/Tp.png}
-\caption{$T_p$ as a function of input size $n$ and number of processes $p$.\label{Tp}}
-\end{figure}
-
-\goodbreak\subsection{Speedup}\index{speedup}
-
-The {\it speedup} is defined as
-
-\begin{equation}
-S_p(n) = \frac{T_1(n)}{T_p(n)}
-\end{equation}
-where $T_1$ is the time it takes to run the algorithm on an input of size $n$ on one processing unit (e.g., node), and $T_p$ is the time it takes to run the same algorithm on the same input using $p$ nodes in parallel. Fig.~\ref{Sp} shows an example of speedup. When communication overhead dominates, speedup decreases.
-
-\begin{figure}[ht]
-\centering\includegraphics[width=4in]{images/Sp.png}
-\caption{$S_p$ as a function of input size $n$ and number of processes $p$.\label{Sp}}
-\end{figure}
-
-\goodbreak\subsection{Efficiency}\index{efficiency}
-
-The {\it efficiency} is defined as
-
-\begin{equation}
-E_p(n) = \frac{S_p(n)}{p} = \frac{T_1(n)}{p T_p(n)}
-\end{equation}
-Notice that in case of perfect parallelization (impossible), $T_p=T_1/p$, and therefore $E_p(n)=1$. Fig.~\ref{Ep} shows an example of efficiency. When communication overhead dominates, efficiency drops. Notice efficiency is always less than 1. We do not write parallel algorithms because they are more efficient. They are always less efficient and more costly than the nonparallel ones. We do it because we want the result sooner, and there is an economic value in it.
-
-\begin{figure}[ht]
-\centering\includegraphics[width=4in]{images/Ep.png}
-\caption{$E_p$ as a function of input size $n$ and number of processes $p$.\label{Ep}}
-\end{figure}
-
-\goodbreak\subsection{Isoefficiency}\index{isoefficiency}
-
-Given a value of efficiency that we choose as target, $E$, and a given number of nodes, $p$, we ask what is the maximum size of a problem that we can solve. The answer is found by solving for $n$ the following equation:
-
-\begin{equation}
-E_p(n) = E
-\end{equation}
-For example $T_p$, we obtain
-\begin{equation}
-E_p = \frac1{1 + 2p^2(t_s + t_w n/p)/(n^2 t_a)} = E
-\end{equation}
-which solved in $n$ yields
-\begin{equation}
-n \simeq 2 \frac{t_w}{t_a} \frac{E}{1-E} p
-\end{equation}
-Isoefficiency curves for different values of $E$ are shown in fig.~\ref{Ip}.
-For our example problem, $n$ is proportional to $p$. In general, this is not true, but $n$ is monotonic in $p$.
-
-\begin{figure}[ht]
-\centering\includegraphics[width=4in]{images/Ip.png}
-\caption{Isoefficiency curves for different values of the target efficiency.\label{Ip}}
-\end{figure}
-
-\goodbreak\subsection{Cost}\index{cost of computation}
-
-The cost of a computation is equal to the time it takes to run on each node, multiplied by the number of nodes involved in the computation:
-
-\begin{equation}
-C_p(n) = p T_p(n)
-\end{equation}
-
-Notice that in general
-
-\begin{equation}
-\frac{\textrm{d}C_p(n)}{\textrm{d}p} = \alpha T_1(n) > 0
-\end{equation}
-
-This means that for a fixed problem size $n$, the more an algorithm is parallelized, the more it costs to run it (because it gets less and less efficient).
-
-\begin{figure}[ht]
-\centering\includegraphics[width=4in]{images/Cp.png}
-\caption{$C_p$ as a function of input size $n$ and a number of processes $p$.\label{Cp}}
-\end{figure}
-
-\goodbreak\subsection{Cost optimality}\index{cost optimality}
-
-With the preceding disclaimer, we define cost optimality as the choice of $p$ (as a function of $n$), which makes the cost scale proportional to $T_1(n)$:
-
-\begin{equation}
-p T_p(n) \propto T_1(n)
-\end{equation}
-
-Or in other words, looking for the $p(n)$ such that
-
-\begin{equation}
-\lim_{n\rightarrow\infty} p(n) T_{p(n)}(n) / T_1(n) = const. \ne 0
-\end{equation}
-
-\goodbreak\subsection{Amdahl's law}\index{Amdahl's law}
-
-Consider an algorithm that can be parallelized, but one fraction $\alpha$ of its total sequential running time $\alpha T_1$ cannot be parallelized. That means that $T_p = \alpha T_1 + (1-\alpha) T_1/p$, and this yields~\cite{admhal}
-
-\begin{equation}
-S_p = \frac{1}{\alpha+(1-\alpha)/p} < \frac{1}{\alpha}
-\end{equation}
-
-Therefore the speedup is theoretically limited.
 
 \chapter{Appendices}
 
@@ -11159,7 +10804,6 @@ cardinality} of set ${\cal A}.$
 
 \item  cardinality($\mathbb{R}$)=uncountable infinite ($\infty $) !!!
 \end{itemize}
-
 
 \subsubsection{Relations}
 
@@ -11316,7 +10960,6 @@ Examples:
 \sum_{i=0}^{i<n}\frac 1{i(i+1)} &=&1-\frac 1n\text{ (telescopic sum)}
 \end{eqnarray}
 
-
 \goodbreak\subsection{Limits ($n\rightarrow \infty $)}
 
 In this section we will only deal with limits ($n\rightarrow \infty $) of
@@ -11453,8 +11096,5 @@ $x^n\log x, n>0$ & $x^{n-1}(n\log x+1)$ \\ \hline
 \bibitem{ito} Kiyoshi Ito, ``On stochastic differential equations'', Memoirs, American Mathematical Society 4, 1–51 (1951)
 \bibitem{shreve} Steven Shreve, ``Stochastic Calculus for Finance II: Continuous Time Models'', Springer (2008) pp 114. ISBN:978-0-387-40101-0
 \bibitem{folding} Sorin Istrail and Fumei Lam, ``Combinatorial Algorithms for Protein Folding in Lattice Models: A Survey of Mathematical Results'' (2009)
-\bibitem{flynn} Michael Flynn, ``Some Computer Organizations and Their Effectiveness''. IEEE Trans. Comput. C–21 (9) (1972) pp 948–960. DOI:10.1109/TC.1972.5009071
-\bibitem{admhal} Gene Amdahl, ``Validity of the Single Processor Approach to Achieving Large-Scale Computing Capabilities'', AFIPS Conference Proceedings (30) (1967) pp 483–485
-\bibitem{mapreduce} Jeffrey Dean and Sanjay Ghemawat. 2008. MapReduce: simplified data processing on large clusters. Commun. ACM 51, 1 (January 2008), 107-113. DOI=10.1145/1327452.1327492 http://doi.acm.org/10.1145/1327452.1327492
 \end{thebibliography}
 \end{document}
