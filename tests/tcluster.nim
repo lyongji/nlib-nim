@@ -13,7 +13,7 @@ suite "cluster":
     check c.k == 6
     let (_, clusters) = c.find(2)
     check clusters.len == 2
-    # the 6 points should split 3 / 3 between the two near-clusters
+    # 6 个点应在两个近邻簇之间平均分为 3 / 3
     check clusters[0].len + clusters[1].len == 6
 
   test "find 1 collapses to a single cluster":

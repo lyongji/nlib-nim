@@ -1,21 +1,20 @@
-## Dense floating-point matrix with row-major storage and overloaded
-## arithmetic. The book's NeuralNetwork, Markowitz, eigenvalue, and
-## sparse-solver code all build on this type.
+## 稠密浮点矩阵，行主序存储，重载算术运算。
+## 书中的 NeuralNetwork、Markowitz、特征值和稀疏求解器代码均基于此类型。
 
 import std/sequtils
 
 type
   Matrix* = ref object
     nrows*, ncols*: int
-    data*: seq[float]    # row-major
+    data*: seq[float]    # 行主序
 
 proc newMatrix*(rows: int, cols = 1, fill = 0.0): Matrix =
-  ## A `rows x cols` matrix filled with `fill`.
+  ## 一个用 `fill` 填充的 `rows x cols` 矩阵。
   Matrix(nrows: rows, ncols: cols,
          data: newSeqWith(rows * cols, fill))
 
 proc newMatrix*(rows, cols: int, fill: proc(r, c: int): float): Matrix =
-  ## A `rows x cols` matrix where element (r, c) is `fill(r, c)`.
+  ## 一个 `rows x cols` 矩阵，元素 (r, c) 为 `fill(r, c)`。
   result = Matrix(nrows: rows, ncols: cols,
                   data: newSeq[float](rows * cols))
   for r in 0 ..< rows:
@@ -23,7 +22,7 @@ proc newMatrix*(rows, cols: int, fill: proc(r, c: int): float): Matrix =
       result.data[r * cols + c] = fill(r, c)
 
 proc newMatrix*(rows: seq[seq[float]]): Matrix =
-  ## Build from a sequence of rows.
+  ## 从行序列构建。
   let n = rows.len
   let m = rows[0].len
   result = newMatrix(n, m)
@@ -32,7 +31,7 @@ proc newMatrix*(rows: seq[seq[float]]): Matrix =
       result.data[r * m + c] = rows[r][c]
 
 proc newMatrix*(values: seq[float]): Matrix =
-  ## Build a column vector from a flat sequence.
+  ## 从一维序列构建列向量。
   newMatrix(values.len, 1, proc(r, c: int): float = values[r])
 
 proc `[]`*(a: Matrix, i, j: int): float = a.data[i * a.ncols + j]
@@ -67,8 +66,7 @@ proc diagonal*(d: seq[float]): Matrix =
   newMatrix(d.len, d.len,
     proc(r, c: int): float = (if r == c: d[r] else: 0.0))
 
-# Element-wise addition/subtraction; scalar broadcast for square or
-# vector matrices follows the book's convention.
+# 逐元素加减法；对标量广播（方阵或向量矩阵）遵循书中约定。
 
 proc `+`*(a, b: Matrix): Matrix =
   if a.nrows != b.nrows or a.ncols != b.ncols:
@@ -101,8 +99,7 @@ proc `*`*(x: float, a: Matrix): Matrix =
 proc `*`*(a: Matrix, x: float): Matrix = x * a
 
 proc `*`*(a, b: Matrix): Matrix =
-  ## Matrix multiplication. As a convenience, two equal-length column
-  ## vectors return their scalar product wrapped in a 1x1 matrix.
+  ## 矩阵乘法。作为便利，两个等长列向量返回其标量积，封装在 1x1 矩阵中。
   if a.ncols == 1 and b.ncols == 1 and a.nrows == b.nrows:
     var s = 0.0
     for r in 0 ..< a.nrows: s += a[r, 0] * b[r, 0]
@@ -119,7 +116,7 @@ proc `*`*(a, b: Matrix): Matrix =
       result[r, c] = s
 
 proc inv*(a0: Matrix, x = 1.0): Matrix =
-  ## Returns x * a^-1 using Gauss-Jordan elimination with partial pivoting.
+  ## 使用部分主元 Gauss-Jordan 消去法计算 x * a⁻¹。
   let n = a0.ncols
   if a0.nrows != n:
     raise newException(ArithmeticDefect, "matrix not squared")
@@ -147,7 +144,7 @@ proc `/`*(a: Matrix, x: float): Matrix = (1.0 / x) * a
 proc `/`*(a, b: Matrix): Matrix = a * (1.0 / b)
 
 proc T*(a: Matrix): Matrix =
-  ## Transpose of `a`.
+  ## `a` 的转置。
   newMatrix(a.ncols, a.nrows, proc(r, c: int): float = a[c, r])
 
 proc isAlmostSymmetric*(a: Matrix, ap = 1e-6, rp = 1e-4): bool =

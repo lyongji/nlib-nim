@@ -1,4 +1,4 @@
-## Hierarchical (agglomerative) clustering.
+## 层次（凝聚式）聚类。
 
 import std/[algorithm, tables]
 

@@ -1,4 +1,4 @@
-## Binary search tree, recursively implemented.
+## 二分搜索树，递归实现。
 
 type
   BinarySearchTree*[K, V] = ref object

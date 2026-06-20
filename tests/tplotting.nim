@@ -1,9 +1,8 @@
 import std/[unittest, os, strutils]
 import nlib/plotting
 
-# These tests exercise the data-marshaling paths only. We do not assert
-# that gnuplot is installed; if it is missing, the rendered image
-# simply will not be produced, but the `.dat` companion file must be.
+# 这些测试仅演练数据编组路径。我们不假定 gnuplot 已安装；
+# 如果缺失，渲染图像将不会生成，但 `.dat` 附随文件必须存在。
 
 suite "plotting":
   let dir = getTempDir() / "nlib_plotting"

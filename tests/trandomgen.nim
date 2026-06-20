@@ -22,7 +22,7 @@ suite "randomgen":
     check streams.len == 4
     var first: seq[float]
     for s in streams: first.add s.random()
-    # very likely the four leapfrogged values are distinct
+    # 四个蛙跳值很可能是互不相同的
     check first.toHashSet().len == 4
 
   test "MarsenneTwister produces values in [0, 1)":

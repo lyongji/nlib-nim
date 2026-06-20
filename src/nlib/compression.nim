@@ -1,4 +1,4 @@
-## Huffman coding (a Shannon--Fano-style minimal-prefix code).
+## 哈夫曼编码（Shannon–Fano 式最小前缀码）。
 
 import std/[heapqueue, tables]
 
@@ -25,7 +25,7 @@ proc inorderTreeWalk(t: HuffmanTree, key: string,
     inorderTreeWalk(t.right, key & "1", keys)
 
 proc encodeHuffman*(input: string): (Table[char, string], string) =
-  ## Huffman-encode `input`. Returns (symbol table, bit string).
+  ## 对 `input` 进行哈夫曼编码。返回（符号表, 位串）。
   var symbols = initTable[char, int]()
   for s in input:
     symbols[s] = symbols.getOrDefault(s, 0) + 1
@@ -44,7 +44,7 @@ proc encodeHuffman*(input: string): (Table[char, string], string) =
   if heap.len == 1:
     let only = heap[0].tree
     case only.kind
-    of hkLeaf: symbolMap[only.symbol] = "0"   # single-symbol input
+    of hkLeaf: symbolMap[only.symbol] = "0"   # 单符号输入
     of hkNode: inorderTreeWalk(only, "", symbolMap)
   var encoded = ""
   for s in input: encoded.add symbolMap[s]

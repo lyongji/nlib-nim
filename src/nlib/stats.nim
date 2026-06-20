@@ -1,9 +1,9 @@
-## Basic descriptive statistics.
+## 基本描述统计。
 
 import std/math
 
 proc E*(f: proc(x: float): float, S: seq[float]): float =
-  ## Expectation of `f` over the sample set `S`.
+  ## `f` 在样本集 `S` 上的期望。
   if S.len == 0: return 0.0
   for x in S: result += f(x)
   result /= float(S.len)

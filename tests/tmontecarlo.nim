@@ -1,8 +1,8 @@
 import std/[unittest, math, random]
 import nlib/montecarlo
 
-# `method` declarations must be top-level in Nim, so the engine
-# subclass used to test MCEngine is declared outside the test block.
+# `method` 声明必须在 Nim 的顶层作用域中，因此用于测试 MCEngine 的
+# 引擎子类在测试块之外声明。
 type PiSimulator = ref object of MCEngine
 
 method simulateOnce(e: PiSimulator): float =
@@ -18,13 +18,13 @@ suite "montecarlo":
     for _ in 0 ..< 200: xs.add gauss(2.0, 1.0)
     let (lo, mu, hi) = bootstrap(xs)
     check lo <= mu and mu <= hi
-    # the sample mean of 200 N(2, 1) draws is well within [1.5, 2.5]
+    # 200 个 N(2, 1) 样本的均值应在 [1.5, 2.5] 范围内
     check mu > 1.5 and mu < 2.5
 
   test "MCEngine subclass converges":
     randomize(2024)
-    # ap = rp = 0 disables early termination so all `ns` iterations
-    # run, giving a tight estimate of pi.
+    # ap = rp = 0 禁用提前终止，因此所有 `ns` 次迭代都会运行，
+    # 从而给出精确的 pi 估计。
     let s = PiSimulator()
     let (_, mu, _) = s.simulateMany(ap = 0.0, rp = 0.0, ns = 20000)
     check abs(mu - 3.14159) < 0.1

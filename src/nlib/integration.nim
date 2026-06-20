@@ -1,5 +1,4 @@
-## Numerical integration: trapezoidal, adaptive trapezoidal, and
-## Vandermonde quadrature.
+## 数值积分：梯形法、自适应梯形法和 Vandermonde 求积法。
 
 import std/math
 import ./matrix
@@ -7,7 +6,7 @@ import ./linalg
 
 proc integrateNaive*(f: proc(x: float): float,
                      a, b: float, n = 20): float =
-  ## Trapezoidal integration of `f` over `[a, b]` with `n` slices.
+  ## 用 `n` 个切片在 `[a, b]` 上对 `f` 进行梯形积分。
   let h = (b - a) / float(n)
   result = h / 2.0 * (f(a) + f(b))
   for i in 1 ..< n:
@@ -15,7 +14,7 @@ proc integrateNaive*(f: proc(x: float): float,
 
 proc integrate*(f: proc(x: float): float, a, b: float,
                 ap = 1e-4, rp = 1e-4, ns = 20): float =
-  ## Iteratively-refined trapezoidal integration to a target precision.
+  ## 逐步精化的梯形积分，达到目标精度。
   var I = integrateNaive(f, a, b, 1)
   for k in 1 ..< ns:
     let IOld = I

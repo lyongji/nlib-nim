@@ -1,9 +1,9 @@
-## Sorting algorithms and binary search.
+## 排序算法与二分查找。
 
 import std/random
 
 proc insertionSort*[T](a: var seq[T]) =
-  ## Sort `a` in place using insertion sort. O(n^2) worst case.
+  ## 使用插入排序对 `a` 原地排序。最坏情况 O(n²)。
   for i in 1 ..< a.len:
     var j = i
     while j > 0 and a[j] < a[j-1]:
@@ -11,7 +11,7 @@ proc insertionSort*[T](a: var seq[T]) =
       dec j
 
 proc merge*[T](a: var seq[T], p, q, r: int) =
-  ## Merge step used by both recursive and iterative mergesort.
+  ## 合并步骤，递归和迭代归并排序均使用。
   var b: seq[T] = @[]
   var i = p
   var j = q
@@ -30,7 +30,7 @@ proc merge*[T](a: var seq[T], p, q, r: int) =
     a[p + k] = b[k]
 
 proc mergesort*[T](a: var seq[T], p = 0, r = -1) =
-  ## Sort `a[p..<r]` in place using merge sort. O(n log n).
+  ## 使用归并排序对 `a[p..<r]` 原地排序。O(n log n)。
   let r = if r < 0: a.len else: r
   if p < r - 1:
     let q = (p + r) div 2
@@ -39,7 +39,7 @@ proc mergesort*[T](a: var seq[T], p = 0, r = -1) =
     merge(a, p, q, r)
 
 proc mergesortNonrecursive*[T](a: var seq[T]) =
-  ## Bottom-up (non-recursive) merge sort. O(n log n).
+  ## 自底向上（非递归）归并排序。O(n log n)。
   let n = a.len
   var blocksize = 1
   while blocksize < n:
@@ -63,7 +63,7 @@ proc partition[T](a: var seq[T], i, j: int): int =
   return h
 
 proc quicksort*[T](a: var seq[T], p = 0, r = -1) =
-  ## Randomized quicksort. O(n log n) expected.
+  ## 随机化快速排序。期望时间 O(n log n)。
   let r = if r < 0: a.len else: r
   if p < r - 1:
     let q0 = rand(p .. r - 1)
@@ -73,7 +73,7 @@ proc quicksort*[T](a: var seq[T], p = 0, r = -1) =
     quicksort(a, q + 1, r)
 
 proc countingsort*(a: var seq[int]) =
-  ## Counting sort for non-negative integers. O(n + max(a)).
+  ## 非负整数计数排序。O(n + max(a))。
   if a.len == 0: return
   var lo = a[0]
   var hi = a[0]
@@ -93,7 +93,7 @@ proc countingsort*(a: var seq[int]) =
       inc i
 
 proc binarySearch*[T](a: openArray[T], element: T): int =
-  ## Index of `element` in sorted `a`, or -1 if not present.
+  ## `element` 在已排序 `a` 中的索引，不存在返回 -1。
   var lo = 0
   var hi = a.len - 1
   while hi >= lo:

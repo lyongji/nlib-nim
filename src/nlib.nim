@@ -1,13 +1,12 @@
-## nlib --- numerical algorithms accompanying the book
-## *Annotated Algorithms in Nim* by Massimo Di Pierro.
+## nlib —— 随书附带的数值算法库
+## 《注解版 Nim 算法》（Massimo Di Pierro 著）
 ##
-## This is a thin umbrella module that re-exports the contents of
-## every submodule under `src/nlib/`, so that user code can simply do
+## 这是一个轻量伞模块，重新导出 `src/nlib/` 下所有子模块的内容，
+## 用户代码只需
 ##
 ##   import nlib
 ##
-## and have access to the whole library. Submodules can also be
-## imported individually if a smaller dependency footprint is desired.
+## 即可访问整个库。子模块也可单独导入以减小依赖体积。
 
 import nlib/sorting;        export sorting
 import nlib/heap;           export heap

@@ -1,7 +1,7 @@
-## A simple persistent key/value store backed by a JSON file. The
-## chapters call this `PersistentDictionary`; the book sketch used
-## SQLite, but a JSON file has no external dependencies and serves
-## the memoization and cached-stock-data use cases just as well.
+## 基于 JSON 文件的简单持久化键值存储。
+## 各章节称其为 `PersistentDictionary`；
+## 本书初稿曾使用 SQLite，但 JSON 文件无需外部依赖，
+## 同样能满足记忆化和股票数据缓存等用例。
 
 import std/[json, os, tables]
 

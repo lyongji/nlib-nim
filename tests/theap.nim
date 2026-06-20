@@ -7,7 +7,7 @@ suite "heap":
   test "heapify produces a valid max-heap":
     var a = @[3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5]
     heapify(a)
-    # parent >= each child
+    # 父节点 >= 每个子节点
     for i in 0 ..< a.len:
       let l = 2*i + 1; let r = 2*i + 2
       if l < a.len: check a[i] >= a[l]

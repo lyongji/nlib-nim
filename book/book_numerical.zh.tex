@@ -1,0 +1,714 @@
+\documentclass[justified, sixbynine]{tufte-book}
+
+%
+% TODO:
+% - add implementation of fit() and .predict()
+% - add event loop example
+% - add sparse matrix example
+% - rewrite Matrix
+% - dimensional analysis
+
+% The optional argument is the plain-text title used for the running heads
+% and PDF metadata. Without it the header reuses \title verbatim and the
+% \\[0.5em] line break leaks its optional argument as the literal "[0.5em]".
+\title[数值算法 Nim 实现]{\LARGE 数值算法 Nim 实现\\[0.5em]
+       \large 物理学、生物学、金融学中的应用}
+
+\author{Massimo Di Pierro}
+\publisher{Experts4Solutions}
+
+% For nicely typeset tabular material
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{makeidx}
+\usepackage{tocloft}
+\usepackage{parskip}
+\usepackage{upquote}
+\usepackage{verbatim}
+\usepackage{listings}
+\usepackage{url}
+% CJK support for LuaLaTeX with fontspec
+\usepackage{fontspec}
+\setmainfont{Noto Sans CJK SC}
+\setmonofont{Noto Sans CJK SC}
+
+\sloppy
+\makeindex
+
+\def\stackunder#1#2{\mathrel{\mathop{#2}\limits_{#1}}}
+\definecolor{lg}{rgb}{0.9, 0.9, 0.9}
+\definecolor{dg}{rgb}{0.3, 0.3, 0.3}
+\def\ft{\small\tt}
+\def\func{\textrm}
+\def\subsubsection#1{{\bf #1}}
+
+\theoremstyle{plain}% default
+\newtheorem{theorem}{定理}[section]
+\newtheorem{lemmma}[theorem]{引理}
+\newtheorem{proposition}[theorem]{命题}
+\newtheorem * {corollary}{推论}
+\theoremstyle{definition}
+\newtheorem{definition}{定义}[section]
+\newtheorem{conjecture}{猜想}[section]
+\newtheorem{example}{示例}[section]
+\theoremstyle{remark}
+\newtheorem * {remark}{注记}
+\newtheorem * {note}{注释}
+\newtheorem{case}{情况}
+
+% listings does not have built-in Nim support, but Nim's keyword set is
+% close enough to typical scripting languages for the listings package;
+% we define a custom Nim mode by listing the keywords explicitly.
+\lstdefinelanguage{Nim}{
+  morekeywords={addr, and, as, asm, bind, block, break, case, cast,
+                concept, const, continue, converter, defer, discard,
+                distinct, div, do, elif, else, end, enum, except, export,
+                finally, for, from, func, if, import, in, include,
+                interface, is, isnot, iterator, let, macro, method, mixin,
+                mod, nil, not, notin, object, of, or, out, proc, ptr,
+                raise, ref, return, shl, shr, static, template, try,
+                tuple, type, using, var, when, while, xor, yield,
+                true, false, result, echo, openArray, seq, array, string,
+                int, int8, int16, int32, int64, uint, uint8, uint16,
+                uint32, uint64, float, float32, float64, bool, char, void},
+  sensitive=true,
+  morecomment=[l]{\#},
+  morecomment=[n]{\#[}{]\#},
+  morestring=[b]"
+}
+% NOTE: we deliberately do NOT declare ' as a string delimiter. In Nim a
+% single quote is used both for char literals ('A') and, more often in this
+% book, for typed numeric literals (1'i64, 0x9d2c5680'u32). Treating ' as a
+% string opener leaves it unterminated on those lines and mis-colors the
+% remainder of the listing. The triple-double-quote case is also avoided.
+\lstset{language=Nim,
+   breaklines=true, breakatwhitespace=true,
+   postbreak=\mbox{\textcolor{dg}{$\hookrightarrow$}\space},
+   basicstyle=\ttfamily\color{black}\footnotesize,
+   keywordstyle=\bfseries\ttfamily,
+   commentstyle=\itshape\ttfamily,
+   stringstyle=\color{dg}\itshape\ttfamily,
+   upquote=true,
+   numbers=left, numberstyle=\color{dg}\tiny, stepnumber=1, numbersep=5pt,
+   backgroundcolor=\color{lg},
+   tabsize=4, showspaces=false,
+   showstringspaces=false,
+   aboveskip=6pt,
+   belowskip=-3pt
+}
+
+% Disable Tufte-style captions for ctables
+\makeatletter % allows @ in macro names
+\def\@ctblCaption{
+   \ifx\@ctblcap\undefined\let\@ctblcap\@ctblcaption\fi
+   \ifx\@ctblcaption\empty\else
+      \gdef\@ctblcaptionarg{\ifx\@ctbllabel\empty\else\label{\@ctbllabel}\fi
+         \@ctblcaption\ \@ctblcontinued\strut}
+      \ifx\@ctblcap\empty
+         \caption[]{\@ctblcaptionarg}
+      \else
+         \caption[\@ctblcap]{\@ctblcaptionarg}
+      \fi
+   \fi
+}
+\makeatother % restores original meaning of @
+
+\setcounter{secnumdepth}{4}
+\setcounter{tocdepth}{4}
+\raggedbottom
+\begin{document}
+
+\frontmatter
+
+\maketitle
+
+\thispagestyle{empty}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{2mm}
+{\footnotesize
+\vskip 1in
+版权所有 2026 Massimo Di Pierro。保留所有权利。
+\vskip 1cm
+
+本书内容依据 CREATIVE COMMONS PUBLIC LICENSE BY-NC-ND 3.0 条款提供。
+
+\url{http://creativecommons.org/licenses/by-nc-nd/3.0/legalcode}
+
+本作品受版权法和/或其他适用法律的保护。除非根据本许可或版权法授权，任何对本作品的使用均被禁止。
+
+行使本协议提供的任何权利，即表示您接受并同意受本许可条款的约束。如果本许可被视为合同，则许可方基于您接受此类条款和条件而授予您此处包含的权利。
+
+责任限制/保证免责声明：尽管出版商和作者已尽最大努力准备本书，但他们不对本书内容的准确性或完整性作出任何陈述或保证，并特别声明不承担任何对适销性或特定用途适用性的默示保证。销售代表或书面销售材料不得创建或扩展任何保证。本文包含的建议和策略可能不适合您的情况。您应在适当时咨询专业人士。无论是出版商还是作者均不对任何利润损失或任何其他商业损害负责，包括但不限于特殊、附带、后果性或其他损害。\\ \\
+
+如需了解有关本材料使用的更多信息，请联系：
+
+\begin{verbatim}
+Massimo Di Pierro
+Email: massimo.dipierro@gmail.com
+\end{verbatim}
+
+构建日期：\today
+}
+
+\newpage
+\thispagestyle{empty}
+\phantom{placeholder}
+\vspace{2in}
+\begin{flushright}
+{\it 献给我的父母，他们教会了我一切重要的东西}
+\end{flushright}
+\newpage
+\thispagestyle{empty}
+\phantom {a}
+\newpage
+
+\setlength{\cftparskip}{\baselineskip}
+\tableofcontents
+
+\mainmatter
+\begin{fullwidth}
+
+\goodbreak\chapter{引言}
+
+本书是同一位作者先前版本到 Nim 语言的移植。原版书使用 Python 编写，名为《注解版 Python 算法》。它来源于作者在 DePaul 大学计算学院 10 年间讲授的多门课程讲义，包括算法设计与分析、科学计算和蒙特卡洛模拟。这些课程传授任何对数值算法感兴趣的科学家和对计算金融感兴趣的学生所必需的核心知识。
+
+我们选择 Nim，因为其语法与 Python 高度相似，使已经熟悉 Python 的读者能自然地过渡，同时 Nim 拥有与 C 语言媲美的运行速度。这一组合使 Nim 成为开发不牺牲性能的科学应用的理想选择。随着时间的推移，作者开始欣赏并热爱 Nim 的语法、其构建速度和运行速度。
+
+这些笔记并不全面，但它们试图用一些常用工具和统一符号来识别和描述这些课程中教授的最重要概念。
+
+特别地，这些笔记不包含证明；相反，它们提供定义和带注释的代码。代码以模块化方式构建，并在全书范围内尽可能多地复用，以便计算的每一步都清晰可见。代码中定义的每个函数都附带一个或多个实际应用示例。
+
+我们采用跨学科方法，提供金融、物理、生物学和计算机科学领域的示例。这是为了强调，尽管我们经常将知识分门别类，但构成其基础的核心理念和方法论却寥寥无几。归根结底，这本书是关于用计算机解决问题的。您将学到的算法可以应用于不同学科。纵观历史，物理学家发明的算法后来在生物学或金融学中找到应用，这并不罕见。
+
+本书中几乎所有算法都可以在 {\ft nlib} GitHub 仓库中找到：
+
+\url{https://github.com/mdipierro/nlib-nim}
+
+\section{核心思想}
+
+尽管我们涵盖了许多不同的算法和示例，但本书中有几个核心思想贯穿始终。
+
+第一个核心思想是，我们可以通过使用近似来简化问题的求解，然后通过迭代和计算修正来系统地改进近似。
+
+分而治之的方法论可以看作这一思想的一个例子。我们在插入排序中使用它——先排序前两个数，然后排序前三个，再排序前四个，以此类推。我们在归并排序中使用它——先排序每两个数的一组，然后每四个数的一组，然后每八个一组，以此类推。我们在 Prim、Kruskal 和 Dijkstra 算法中使用它——迭代图的节点，随着我们获取关于它们的信息，用这些信息更新最短路径的信息。
+
+我们几乎在所有数值算法中都使用这一方法，因为任何可微函数都可以用线性函数近似：
+\begin{equation}
+f(x+\delta x) \simeq f(x) + f'(x)\delta x
+\end{equation}
+我们在牛顿法中利用这个公式来求解非线性方程和优化问题，无论是一维还是多维。
+
+我们在不动点方法中使用相同的近似来求解如 $f(x)=0$ 的方程；在最小残差法和共轭梯度法中使用它；以及在本书最后一章求解 Laplace 方程时使用。在所有这些算法中，我们从解的随机猜测开始，然后迭代寻找更好的解，直到收敛。
+
+第二个核心思想是，某些量是随机的，但即使是随机数也有模式，我们可以使用分布和相关等工具来捕获这些模式。这些模式的存在帮助我们建模可能产生随机输出的系统（例如核反应、金融系统），也帮助我们的计算。事实上，我们可以使用随机数来计算非随机的量（蒙特卡洛方法）。我们在本书不同部分中最常用的近似是，当随机变量 $x$ 在某个点附近具有给定的不确定度 $\delta x$ 时，其分布是高斯分布。借助高斯随机数的性质，我们得出以下结论：
+\begin{itemize}
+\item 使用线性近似（我们的第一个核心思想），如果 $z=f(x)$，则输出的不确定度为
+\begin{equation}
+\delta z = f'(x) \delta x
+\end{equation}
+\item 如果我们相加两个独立的高斯随机变量 $z=x+y$，则输出的不确定度为
+\begin{equation}
+\delta z = \sqrt{\delta x^2 + \delta y^2}
+\end{equation}
+\item 如果我们相加 $N$ 个独立同分布的高斯变量 $z=\sum x_i$，则输出的不确定度为
+\begin{equation}
+\delta z = \sqrt{N}\delta x
+\end{equation}
+我们反复使用这一点，例如在关联不同时间间隔（日波动率、年波动率）时。
+\item 如果我们计算 $N$ 个独立同分布高斯随机变量的平均值 $z=1/N \sum x_i$，则平均值的不确定度为
+\begin{equation}
+\delta z = \delta x/\sqrt{N}
+\end{equation}
+我们用这个公式来估计蒙特卡洛计算中平均值的误差。此时我们记作 $d\mu = \sigma/\sqrt{N}$，其中 $\sigma$ 是 $\{ x_i\}$ 的标准差。
+\end{itemize}
+
+第三个核心思想是，迭代算法的运行时间与迭代次数成正比。因此，我们的目标是使达到目标精度所需的迭代次数最小化。我们建立了一种根据运行时间比较算法的语言，并将算法分类。这对于根据具体问题选择最佳算法非常有用。
+
+归根结底，我们甚至可以将自身理解为一台并行机器，通过近似来建模来自世界的输入。大脑是一个可以用神经网络建模的图。学习过程是一个持续的优化过程，在此过程中大脑调整突触以产生越来越好的响应。决策过程模拟了一棵搜索树。我们通过搜索之前遇到的最相似的问题来求解，然后优化解。我们的 DNA 是一种代码，经过进化可以高效压缩将我们从单细胞成长为复杂生命体所需的信息。我们根据可以用遗传算法建模的进化机制进化。我们可以使用最长公共子序列算法找出与其他生物的相似之处。我们可以使用最短路径算法重建进化树，并发现我们是如何成为现在的样子的。
+
+\section{关于 Nim}
+
+本书使用的编程语言是 Nim~\cite{nim}。Nim 具有接近伪代码的高级表面语法，使算法易于阅读；同时它是静态类型的，编译为小的原生二进制文件，因此同一段既记录了算法又高效运行的代码是可行的。Nim 的标准库、泛型、一等函数和轻量宏系统足以满足本书的所有需求，无需借助外部依赖。
+
+本书的目标是通过从头构建来解释算法。我们的目标不是教用户了解现有的库——这些库可能（并且经常）比我们的实现更快。
+
+\section{本书结构}
+
+本书分为以下章节：
+
+\begin{itemize}
+\item 本章引言。
+\item Nim 编程语言简介。该简介假定读者不陌生的基本编程概念，如条件语句、循环和函数调用，并教授 Nim 的语法，重点介绍对科学应用重要的标准库模块（{\ft std/math}、{\ft std/random}、{\ft std/sequtils}、{\ft std/tables}）以及其他一些模块。
+\item 第 3 章是对一般算法理论及其应用的简短回顾。我们回顾如何从简单的循环到更复杂的递归算法来确定算法的运行时间。我们回顾用于存储信息的基本数据结构，如列表、数组、栈、队列、树和图。我们还回顾了基本算法的分类，如分治、动态规划和贪心算法。在示例中，我们窥探了复杂算法，如 Shannon--Fano 压缩、迷宫求解器、聚类算法和神经网络。
+\item 在第 4 章中，我们讨论传统的数值算法，特别是线性代数、求解器、优化器、积分器和 Fourier--Laplace 变换。我们从回顾泰勒级数及其收敛性开始，以理解近似、误差来源和收敛性。然后使用这些概念，通过系统地改进其一阶（线性）近似来构建更复杂的算法。线性代数作为我们近似和实现多变量函数的工具。
+\item 在第 5 章中，我们回顾概率和统计，并实现执行随机变量统计分析的基本过程。
+\item 在第 6 章中，我们讨论从多种分布生成随机数的算法。Nim 的 {\ft std/random} 模块提供高质量的均匀和高斯生成器，我们在后续章节中使用它，但在本章中我们详细讨论伪随机数生成器的工作原理及其缺陷。
+\item 在第 7 章中，我们编写关于蒙特卡洛模拟的内容。这是一种利用随机数来解决原本确定性问题的数值技术。例如，在第 4 章中，我们讨论了一维数值积分。这些算法可以扩展到在少数维度（二维、三维，有时四维）中执行数值积分，但对于非常多的维度就会失效。这就是蒙特卡洛积分登场的时候——随着变量数量的增加，它越来越成为首选的积分方法。我们展示蒙特卡洛模拟的应用。
+
+\item 最后，在附录中，我们提供有用的公式和定义的纲要。
+\end{itemize}
+
+\section{本书软件}
+
+我们使用由作者开发的以下软件库，这些库根据开源 BSD 许可证提供：
+
+\begin{itemize}
+\item \url{https://github.com/mdipierro/nlib-nim}
+\end{itemize}
+
+我们还使用以下第三方工具：
+
+\begin{itemize}
+\item \url{https://nim-lang.org} —— Nim 编译器和标准库。
+\item \url{http://www.gnuplot.info/} —— {\ft gnuplot}，由一个小辅助程序调用以渲染本书中的图形。
+\end{itemize}
+
+这些笔记中包含的所有代码均由作者根据三条款 BSD 许可证发布。
+
+\section*{致谢}
+
+首先衷心感谢 Andreas Rumpf 发明了优美的 Nim 语言，并亲自审阅了本手稿。
+
+感谢许多帮助审阅本书原始 Python 版本的人：Alan Etkins、Brian Fox、Dan Bowker、Ethan Sudman、Holly Monteith、Konstantinos Moutselos、Luca De Alfaro、Michael Gheith、Paula Mikrut、Sean Neilan 和 John Plamondon。
+我们也感谢我们所有课程的学生提供的有用评论和建议。
+最后，感谢 Wikipedia，我们从中借用了一些想法和示例。
+
+我们还感谢 Anthropic 的 Claude，在将代码从 Python 转换到 Nim、发现技术不准确之处、澄清解释以及提出全书的改进建议方面提供了重要帮助。
+
+\goodbreak\chapter{Nim 语言概述}
+
+\index{Nim}
+
+\goodbreak\section{关于 Nim}
+
+Nim~\cite{nim} 是一种静态类型编译型系统编程语言，具有基于缩进的高级表面语法。它通过编译为 C、C++ 或 JavaScript 生成小的原生二进制文件，同时其标准库和元编程设施赋予其脚本语言的生产力。Nim 拥有强类型系统、自动内存管理（可选手动控制）、泛型、一等函数、异常、线程、通道和丰富的宏系统。
+
+Nim 的三个特性塑造了本书中的代码：
+\begin{itemize}
+\item Nim 的语法接近伪代码，使算法实现清晰可读。
+\item Nim 编译为高效的原生代码，因此同一段代码既作为算法的文档又作为高效运行的程序。
+\item Nim 的标准库涵盖了本书所需的大部分内容——数学函数、随机数生成、数据结构——无需外部包。
+\end{itemize}
+
+Nim 与其他生态系统具有互操作性：外部 {t db\_sqlite} 包将其绑定到 SQLite~\cite{sqlite} 以实现持久化，C FFI 提供对 BLAS 或 FFTW 等库的访问。对于标准库之外的偶尔需求（例如绘图），我们通过 Nim 的外部函数绑定驱动外部图形工具包，而不是重新实现。
+
+您可以在 Nim 官方网站上找到教程、语言手册和标准库参考。
+
+如果您已经熟悉 Nim 语言，可以跳过本章；本书其余部分仅使用此处介绍的结构。
+
+\goodbreak\section{安装 Nim}\index{installation}\index{Nix}\index{nix-shell}
+
+有几种方式获取 Nim 工具链：官方二进制文件、{\ft choosenim} 版本管理器或操作系统的包管理器。我们推荐的方法，也是用于开发和排版本书的方法，是 {\ft Nix} 包管理器。
+
+Nix 是一个包管理器和构建系统，可在 Linux 和 macOS 上使用，其方法不同于 {\ft apt}、{\ft brew} 或 {\ft pip} 等传统工具。Nix 不是修改共享的系统级包集合，而是根据输入的显式描述在隔离环境中构建每个包，并将结果存储在由这些输入派生的唯一路径下。由于输入完全确定输出，构建是\emph{可重现的}：相同的描述在任何机器上——今天或多年以后——都会产生逐字节等价的结果。同一工具的不同版本可以共存而不冲突，除非您要求，否则不会全局安装任何内容。
+
+实际结果是，您可以进入一个临时 shell，其中恰好包含您需要的工具，而不影响系统的其余部分。首先使用官方一行安装程序安装 Nix 本身：
+\begin{lstlisting}
+sh <(curl -L https://nixos.org/nix/install) --daemon
+\end{lstlisting}
+
+然后，要获取包含 Nim 编译器、其包管理器和用于本书图形的 {\ft gnuplot} 工具的环境，运行：
+\begin{lstlisting}
+nix-shell -p nim nimble gnuplot
+\end{lstlisting}
+
+这会下载所需的工具（如果本地存储中尚不存在）并打开一个新的 shell，其中 {\ft nim}、{\ft nimble} 和 {\ft gnuplot} 都在 {\ft PATH} 中。您可以通过以下命令确认其工作：
+\begin{lstlisting}
+nim --version
+\end{lstlisting}
+
+当您退出 shell 时，系统保持原样。要使环境对项目持久化，将依赖项记录在 {\ft shell.nix} 文件中，这样任何检出代码的人仅通过一个简单的 {\ft nix-shell} 即可重建相同的环境。
+
+\goodbreak\section{Nim 交互式解释器}\index{REPL}\index{inim}
+
+虽然 Nim 是一种编译语言，但它附带了一些工具，使得可以交互式地求值表达式，与本书原始版本中使用的 Python REPL 精神相同。交互式 shell 非常适合探索语言、尝试小表达式、检查编译器推断的类型，以及在提交到源文件之前快速验证标准库中过程的行为。
+
+最广泛使用的交互式前端是 {\ft inim}，一个可以通过 Nim 包管理器安装的外部工具：
+\begin{lstlisting}
+nimble install inim
+\end{lstlisting}
+
+安装后，启动 REPL 只需输入：
+\begin{lstlisting}
+inim
+\end{lstlisting}
+
+这将打开一个提示符，每行代码被即时编译和执行：
+\begin{lstlisting}
+nim> let x = 2 + 3
+nim> echo x
+5
+nim> import std/math
+nim> echo sqrt(2.0)
+1.4142135623730951
+\end{lstlisting}
+
+多行定义（过程、类型、控制流块）通过缩进支持，与常规 Nim 源文件完全相同。在会话中声明的变量和导入在会话的其余部分保持可用，因此 REPL 充当增量沙盒。
+
+对于不想安装额外工具的用户，Nim 本身通过 {\ft nim secret} 命令提供轻量级替代方案，该命令启动一个基于编译器 VM 的小型解释器。它支持语言的子集，足以进行算术、字符串操作和大多数不依赖 C 后端标准库调用。
+
+在本书中，我们主要编写完整的程序并使用 {\ft nim c -r} 编译它们，但 REPL 是边阅读边实验代码片段的有用伴侣。
+
+\goodbreak\section{变量、类型和基本运算符}
+
+\goodbreak\subsection{{\ft let}、{\ft var} 和 {\ft const}}
+
+每个绑定由三个关键字之一引入：
+
+\begin{lstlisting}
+let pi = 3.141592653589793   # 不可变，值在运行时确定
+var counter = 0              # 可变
+const Tau = 2.0 * pi         # 编译时常量
+counter = counter + 1
+\end{lstlisting}
+
+{\ft let} 绑定不能被重新赋值；{\ft var} 可以。编译器从初始化器推断类型；当没有初始化器或想要约束字面量时，可以显式写出：
+
+\begin{lstlisting}
+var n: int               # 零初始化
+var x: float = 0.5
+let xs: seq[float] = @[]
+\end{lstlisting}
+
+{\ft @[]} 中使用的 {\ft @} 符号是序列（堆分配的、可增长的数组）构造器。写在数组字面量前面时，它将固定大小的数组转换为 {\ft seq}；例如，{\ft @[1, 2, 3]} 是一个包含三个元素的 {\ft seq[int]}，{\ft @[]} 是一个空 {\ft seq}，其元素类型由上下文决定（这里是 {\ft float}）。没有 {\ft @} 的话，字面量 {\ft [1, 2, 3]} 将表示固定大小的 {\ft array[3, int]}。在本书中，只要需要动态大小的值列表，我们会广泛使用 {\ft @[\dots]} 语法，就像使用 Python 的 {\ft [\dots]} 列表字面量一样。
+
+\goodbreak\subsection{数字、布尔值和字符}
+
+\index{int}\index{float}\index{bool}\index{char}
+
+基本数值类型有 {\ft int}（机器字，有符号）、{\ft int8}、{\ft int16}、{\ft int32}、{\ft int64}、无符号变体 {\ft uint8}--{\ft uint64}，以及浮点类型 {\ft float}（{\ft float64} 的同义词）和 {\ft float32}。{\ft bool} 的值有 {\ft true} 和 {\ft false}；{\ft char} 是一个 8 位字节。
+
+\begin{lstlisting}
+let a = 7              # int
+let b = 3.5            # float
+let big: int64 = 1'i64 shl 40
+let mask: uint32 = 0x9d2c5680'u32
+echo a div 2           # 整数除法：3
+echo a mod 2           # 取余：1
+echo a / 2             # 浮点除法：3.5
+echo 2.0 ^ 10          # 1024.0（乘方）；为此运算符导入 std/math
+echo not true          # false
+\end{lstlisting}
+
+位运算符写作 {\ft and}、{\ft or}、{\ft xor}、{\ft not}、{\ft shl}、{\ft shr}（在 Nim 中 {\ft and}/{\ft or}/{\ft not} 同时覆盖逻辑和位运算；含义取决于操作数类型）。类型后缀如 {\ft 'i64} 和 {\ft 'u32} 固定整数字面量的类型。
+
+\goodbreak\subsection{字符串和字符串化}
+
+\index{string}
+
+字符串是可变的、长度前缀的字节序列。连接运算符是 {\ft \&}；转换为字符串是前缀 {\ft \$}。
+
+\begin{lstlisting}
+let name = "world"
+let greeting = "Hello, " & name & "!"
+echo greeting              # Hello, world!
+echo \$42 & " is a number"  # 42 is a number
+echo greeting.len          # 13
+echo greeting[0 ..< 5]     # "Hello"
+echo greeting.toLowerAscii # std/strutils
+\end{lstlisting}
+
+对于格式化的浮点输出，标准库提供 {\ft formatFloat} 和 {\ft \&""} 字符串插值：
+
+\begin{lstlisting}
+import std/strutils, std/strformat
+let p = 3.14159
+echo formatFloat(p, ffDecimal, 3)   # 3.142
+echo \&"pi rounded is {p:.3f}"       # pi rounded is 3.142
+\end{lstlisting}
+
+\goodbreak\section{复合类型}
+
+\goodbreak\subsection{序列和数组}
+
+\index{seq}\index{array}
+
+{\ft seq[T]} 是堆分配、可增长的 {t T} 类型有序列表。{\ft array[N, T]} 具有编译时已知的固定长度 {t N}。两者都是零索引的。
+
+\begin{lstlisting}
+var xs: seq[int] = @[1, 2, 3]   # @[]：空序列字面量
+xs.add 4                         # @[1, 2, 3, 4]
+xs[0] = 10
+echo xs.len                      # 4
+echo xs[^1]                      # 4（最后一个元素）
+echo xs[1 .. 2]                  # @[2, 3]（切片）
+
+var grid: array[3, float] = [0.0, 0.0, 0.0]
+grid[2] = 1.0
+
+var zeros = newSeq[float](100)               # 100 个零
+let ones = newSeqWith(100, 1.0)              # std/sequtils
+let evens = (0 ..< 10).toSeq().mapIt(it * 2) # @[0, 2, 4, ...]
+\end{lstlisting}
+
+{\ft openArray[T]} 类型用作参数类型，可以接受 {\ft seq[T]}、{\ft array} 或切片，无需复制。
+
+\begin{lstlisting}
+proc sum(xs: openArray[float]): float =
+  for x in xs: result += x
+
+echo sum(@[1.0, 2.0, 3.0])
+echo sum([10.0, 20.0])
+\end{lstlisting}
+
+\goodbreak\subsection{元组}
+
+\index{tuple}
+
+{\ft tuple} 是固定大小的记录。字段可以有名称或匿名。元组支持解构。
+
+\begin{lstlisting}
+let point: (float, float) = (1.5, 2.5)
+let (x, y) = point
+echo x, " ", y                # 1.5 2.5
+
+type
+  Range = tuple[lo, hi: float]
+
+let r: Range = (lo: 0.0, hi: 1.0)
+echo r.hi - r.lo              # 1.0
+\end{lstlisting}
+
+过程可以通过返回元组来返回多个值。
+
+\goodbreak\subsection{表（字典）}
+
+\index{table}\index{dict}
+
+{\ft std/tables} 中的 {\ft Table[K, V]} 容器提供哈希表映射。
+
+\begin{lstlisting}
+import std/tables
+
+var counts = initTable[string, int]()
+counts["apples"] = 3
+counts["oranges"] = 5
+counts["apples"] += 1
+echo counts["apples"]               # 4
+echo "kiwi" in counts               # false
+echo counts.getOrDefault("kiwi", 0) # 0
+
+for key, value in counts:
+  echo key, " -> ", value
+\end{lstlisting}
+
+需要确定性键顺序时使用 {\ft OrderedTable}；线程共享状态使用 {\ft SharedTable}。
+
+\goodbreak\section{控制流}
+
+\goodbreak\subsection{{\ft if}、{\ft case}、{\ft while}、{\ft for}}
+
+{\ft if}/{\ft elif}/{\ft else} 与大多数语言相同；同时也是表达式。
+
+\begin{lstlisting}
+let x = 7
+if x < 0:
+  echo "negative"
+elif x == 0:
+  echo "zero"
+else:
+  echo "positive"
+
+let parity = if x mod 2 == 0: "even" else: "odd"
+\end{lstlisting}
+
+{\ft case} 根据值（通常是序数类型）进行分发：
+
+\begin{lstlisting}
+let grade = 'B'
+case grade
+of 'A': echo "excellent"
+of 'B', 'C': echo "good"
+of 'D' .. 'F': echo "needs work"
+else: echo "?"
+\end{lstlisting}
+
+{\ft while} 循环直到条件为假。{\ft break} 退出循环；{\ft continue} 跳至下次迭代。
+
+\begin{lstlisting}
+var n = 1
+while n < 1000:
+  n = n * 2
+echo n            # 1024
+\end{lstlisting}
+
+{\ft for} 在任何迭代器上迭代。内置迭代器包括整数范围和任何容器的元素。
+
+\begin{lstlisting}
+for i in 0 ..< 5: echo i        # 0 1 2 3 4（上限排他）
+for i in 1 .. 5: echo i         # 1 2 3 4 5（上限包含）
+for i in countdown(5, 1): echo i
+for i in countup(0, 9, 2): echo i  # 0 2 4 6 8
+
+let xs = @[10, 20, 30]
+for v in xs: echo v             # 值
+for i, v in xs: echo i, " ", v  # 索引和值
+\end{lstlisting}
+
+\goodbreak\section{过程}
+
+\goodbreak\subsection{{\ft proc}、默认参数和 {\ft result}}
+
+\index{proc}\index{result}
+
+过程用 {\ft proc} 声明。每个参数都有类型。返回类型在冒号后。主体使用缩进；{\ft =} 引入主体。
+
+\begin{lstlisting}
+proc square(x: float): float =
+  x * x                      # 最后一个表达式是返回值
+
+echo square(3.0)             # 9.0
+\end{lstlisting}
+
+在任何过程内部，特殊变量 {\ft result} 会自动声明、初始化为零值，并在结束时返回。当结果逐步构建时，这非常有用。
+
+\begin{lstlisting}
+proc factorial(n: int): int =
+  result = 1
+  for i in 2 .. n:
+    result *= i
+
+echo factorial(6)            # 720
+\end{lstlisting}
+
+也可以使用 {\ft return value} 提前退出。默认参数写作 {\ft name: type = default}，可以按位置或按名称传递：
+
+\goodbreak\subsection{泛型}
+
+\index{generics}
+
+泛型参数放在过程名后的方括号中。编译器为使用的每组类型实例化单独的副本。
+
+\begin{lstlisting}
+proc swap[T](a, b: var T) =
+  let tmp = a
+  a = b
+  b = tmp
+
+proc maxOf[T](xs: openArray[T]): T =
+  result = xs[0]
+  for x in xs:
+    if x > result: result = x
+
+echo maxOf(@[3, 1, 4, 1, 5, 9, 2, 6])
+echo maxOf(@["apple", "kiwi", "pear"])
+\end{lstlisting}
+
+\goodbreak\subsection{一等函数和闭包}
+
+\index{closure}
+
+过程类型写作 {\ft proc(args): RetType}。过程值可以存储在变量中、作为参数传递、从其他过程返回。
+
+\goodbreak\section{对象类型和方法}
+
+\goodbreak\subsection{{\ft object} 和 {\ft ref object}}
+
+{\ft object} 是值类型；{\ft ref object} 是引用类型（堆分配）。
+
+\goodbreak\section{模块和可见性}
+
+过程、类型或字段以 {\ft *} 结尾则从模块导出；否则为文件私有。
+
+\chapter{算法理论}
+
+算法是解决问题的逐步过程，通常在编程之前开发。
+这个词源自{\it algorism}，来自数学家 al-Khwarizmi，原指使用印度—阿拉伯数字进行算术运算的规则以及方程的系统求解。
+
+事实上，算法独立于任何编程语言。高效的算法可以对我们解决问题的能力产生巨大影响。
+
+算法的基本步骤是循环（{\ft for}）、条件（{\ft if}）和函数调用。开发和分析算法时我们关注：正确性、工作量（运行时间）、空间使用量、简洁清晰度和最优性。
+
+\goodbreak\section{算法的增长阶}
+
+{\it 插入排序}是一种简单算法，每次将一个元素插入到已排序子数组中的正确位置。其最好情况（输入已排序）$T_{best}(n) \propto n$，最坏情况（输入逆序）$T_{worst}(n) \propto n^2$。
+
+我们定义以下集合用于描述算法复杂度：$O(g(n))$（增长不超过 $g(n)$）、$\Omega(g(n))$（增长不慢于 $g(n)$）、$\Theta(g(n))$（与 $g(n)$ 同速增长）、$o(g(n))$（增长慢于 $g(n)$）、$\omega(g(n))$（增长快于 $g(n)$）。
+
+\goodbreak\section{递归关系}
+
+{\it 归并排序}~\cite{mergesort} 由 John von Neumann 发明，将数组分为两半递归排序后合并。其递归关系 $T(n) = 2T(n/2) + n$ 的解为 $\Theta(n\log n)$。这些结果是{\it 主定理}~\cite{mastertheorem}的实际简化。
+
+\goodbreak\section{算法类型}
+
+{\bf 分治法}：将问题拆分为子实例，独立求解后合并。{\bf 动态规划}：通过表格避免重复计算。{\bf 贪心算法}：每步选择局部最优。
+
+\subsection{记忆化}
+缓存函数输出，相同输入时直接返回缓存结果。
+
+\goodbreak\section{计时算法}
+增长阶是理论概念。实践中用 {\ft timef} 等工具测量实际运行时间。
+
+\goodbreak\section{数据结构}
+
+数组：连续内存存储，随机访问 $O(1)$。
+
+列表：节点通过指针连接。Nim 的 {\ft seq} 是连续缓冲区而非链表；真正链表由 {\ft std/lists} 提供。
+
+栈：后进先出（LIFO）。队列：先进先出（FIFO），{\ft std/deques} 提供双端队列。
+
+\goodbreak\subsection{排序}
+
+快速排序：$T_{best}\in\Theta(n\log n)$，$T_{worst}\in\Theta(n^2)$。计数排序仅适用非负整数，$T\in\Theta(k+n)$。
+
+\goodbreak\section{树算法}
+
+\subsection{堆排序和优先队列}
+完全二叉树可映射为数组。若父节点值始终 $\ge$ 子节点，则为最大堆。堆排序 $T\in\Theta(n\log n)$。
+
+\subsection{二叉搜索树}
+各节点值 $\ge$ 左子节点且 $\le$ 右子节点，搜索时间 $O(\log n)$。
+
+\goodbreak\section{图算法}
+
+BFS（广度优先搜索）使用队列，DFS（深度优先搜索）使用栈。不相交集（Union-Find）跟踪元素分组。Kruskal 和 Prim 算法求最小生成树。Dijkstra 算法求单源最短路径。
+
+\subsection{哈夫曼编码}
+基于字符频率构建最优前缀码用于无损压缩。
+
+\subsection{最长公共子序列（LCS）}
+动态规划求解，$O(|a|\cdot|b|)$。
+
+\subsection{Needleman--Wunsch}
+全局序列比对动态规划算法。
+
+\subsection{背包问题}
+连续背包用贪心，离散背包用动态规划。
+
+\subsection{Cantor 论证}
+对角线法证明实数不可数。
+
+\subsection{Gödel 定理}
+不完备性定理：足够强大的形式系统包含不可判定命题。
+
+\goodbreak\chapter{数值算法}
+
+涵盖线性代数、求解器、优化器、积分器和 Fourier 变换。
+
+主要内容：矩阵运算、数值微分、泰勒级数近似、Cholesky 分解、Jacobi 特征值分解、范数和条件数、矩阵指数、一维/多维求根与优化、曲线拟合、数值积分（梯形法、Vandermonde 求积）、稀疏迭代求解器、Fourier 变换、微分方程。
+
+\goodbreak\chapter{概率与统计}
+
+实现基本描述统计：期望、均值、方差、标准差、协方差、相关。
+
+\goodbreak\chapter{随机数与分布}
+
+伪随机数生成器原理：线性同余生成器（LCG）、Mersenne Twister（MT19937）。RandomSource 适配器封装任意均匀随机源。支持多种分布：伯努利、二项、泊松、指数、Pareto、圆/球上的点、Marsaglia-Polar 高斯分布。
+
+\goodbreak\chapter{蒙特卡洛模拟}
+
+利用随机数解决确定性问题。随维度增加，MC 积分渐成首选。
+
+主要内容：Bootstrap 重抽样与置信区间、通用蒙特卡洛引擎（MCEngine）、风险价值（VaR）、MC 积分、Markov 链蒙特卡洛（MCMC）与 Metropolis 算法、Ising 模型、模拟退火与蛋白质折叠。
+
+\chapter{附录}
+
+常用集合、集合运算与定律、关系与函数定义、导数表及计算规则。
+
+\end{fullwidth}
+\end{document}
+

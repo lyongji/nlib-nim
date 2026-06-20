@@ -1,7 +1,7 @@
-## Sequence-alignment dynamic-programming algorithms.
+## 序列比对动态规划算法。
 
 proc lcs*(a, b: string): int =
-  ## Length of longest common subsequence. O(|a| * |b|).
+  ## 最长公共子序列长度。O(|a| * |b|)。
   if a.len == 0 or b.len == 0: return 0
   var previous = newSeq[int](b.len)
   var current = newSeq[int](b.len)
@@ -19,7 +19,7 @@ proc lcs*(a, b: string): int =
   result = current[^1]
 
 proc needlemanWunsch*(a, b: string, p = 0.97): seq[seq[float]] =
-  ## Global sequence alignment scoring matrix.
+  ## 全局序列比对得分矩阵。
   var z: seq[seq[float]] = @[]
   for i, r in a:
     var row: seq[float] = @[]

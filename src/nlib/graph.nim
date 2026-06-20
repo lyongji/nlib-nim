@@ -1,13 +1,13 @@
-## Graph algorithms: BFS, DFS, DisjointSets, MST (Kruskal/Prim), Dijkstra.
+## 图算法：BFS、DFS、不相交集、最小生成树（Kruskal/Prim）、Dijkstra。
 
 import std/[algorithm, math, random]
 
-# --- BFS / DFS -----------------------------------------------------------
+# --- BFS / DFS 广度优先/深度优先搜索 -------------------------------------
 
 proc breadthFirstSearch*[V](
     graph: tuple[vertices: seq[V], links: seq[(int, int)]],
     start: int): seq[int] =
-  ## BFS on a graph (vertices, links). Returns visit order from `start`.
+  ## 在图上执行 BFS。返回从 `start` 开始的访问顺序。
   var blacknodes: seq[int] = @[]
   var graynodes = @[start]
   var neighbors = newSeq[seq[int]](graph.vertices.len)
@@ -24,7 +24,7 @@ proc breadthFirstSearch*[V](
 proc depthFirstSearch*[V](
     graph: tuple[vertices: seq[V], links: seq[(int, int)]],
     start: int): seq[int] =
-  ## DFS on a graph (vertices, links). Returns visit order from `start`.
+  ## 在图上执行 DFS。返回从 `start` 开始的访问顺序。
   var blacknodes: seq[int] = @[]
   var graynodes = @[start]
   var neighbors = newSeq[seq[int]](graph.vertices.len)
@@ -38,7 +38,7 @@ proc depthFirstSearch*[V](
     blacknodes.add current
   result = blacknodes
 
-# --- Disjoint sets (Union-Find) -----------------------------------------
+# --- 不相交集（Union-Find）---------------------------------------------
 
 type
   DisjointSets* = ref object
@@ -71,11 +71,11 @@ proc joined*(d: DisjointSets, i, j: int): bool =
 
 proc len*(d: DisjointSets): int = d.counter
 
-# --- Maze ---------------------------------------------------------------
+# --- 迷宫 ---------------------------------------------------------------
 
 proc makeMaze*(n, d: int): tuple[walls, tornDownWalls: seq[(int, int)]] =
-  ## Generates an `n^d` maze by tearing down random walls until every
-  ## cell is connected. Returns (remainingWalls, tornDownWalls).
+  ## 生成一个 `n^d` 迷宫，随机拆墙直到所有格子连通。
+  ## 返回（剩余墙壁, 已拆除墙壁）。
   var walls: seq[(int, int)] = @[]
   let total = n ^ d
   for i in 0 ..< n * n:
@@ -96,13 +96,13 @@ proc makeMaze*(n, d: int): tuple[walls, tornDownWalls: seq[(int, int)]] =
       remaining.add wall
   (remaining, tornDownWalls)
 
-# --- Kruskal MST --------------------------------------------------------
+# --- Kruskal 最小生成树 -------------------------------------------------
 
 proc kruskal*[V](
     graph: tuple[vertices: seq[V],
                  links: seq[(int, int, float)]]
     ): seq[(int, int, float)] =
-  ## Kruskal's minimum spanning tree on an undirected weighted graph.
+  ## 在无向带权图上执行 Kruskal 最小生成树算法。
   var links = graph.links
   links.sort(proc(a, b: (int, int, float)): int = cmp(a[2], b[2]))
   let s = newDisjointSets(graph.vertices.len)
@@ -111,7 +111,7 @@ proc kruskal*[V](
     if s.join(source, dest):
       result.add (source, dest, length)
 
-# --- Prim / Dijkstra ----------------------------------------------------
+# --- Prim 最小生成树 / Dijkstra 最短路径 -----------------------------------
 
 const PRIM_INFINITY* = 1e100
 
@@ -133,7 +133,7 @@ proc `<`*(a, b: PrimVertex): bool = a.closestDist < b.closestDist
 proc prim*[V](
     graph: tuple[vertices: seq[V], links: seq[(int, int, float)]],
     start: int): seq[(int, int, float)] =
-  ## Prim's minimum spanning tree. Returns (id, closestId, dist) tuples.
+  ## Prim 最小生成树算法。返回（id, 最近点 id, 距离）元组。
   var p: seq[PrimVertex] = @[]
   for i in 0 ..< graph.vertices.len:
     p.add newPrimVertex(i, graph.links)
@@ -157,7 +157,7 @@ proc prim*[V](
 proc dijkstra*[V](
     graph: tuple[vertices: seq[V], links: seq[(int, int, float)]],
     start: int): seq[(int, int, float)] =
-  ## Dijkstra single-source shortest paths.
+  ## Dijkstra 单源最短路径算法。
   var p: seq[PrimVertex] = @[]
   for i in 0 ..< graph.vertices.len:
     p.add newPrimVertex(i, graph.links)

@@ -1,5 +1,5 @@
-## Aggregate test runner: imports every test file so a single
-## ``nim r tests/all.nim`` (or ``nimble test``) runs the whole suite.
+## 聚合测试运行器：导入所有测试文件，以便通过单个
+## ``nim r tests/all.nim``（或 ``nimble test``）运行整个测试套件。
 
 import ./tsorting
 import ./theap

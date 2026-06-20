@@ -1,11 +1,11 @@
-## Cholesky factorization, eigenvalues, norms, condition number,
-## matrix exponential, and iterative solvers for sparse systems.
+## Cholesky 分解、特征值、范数、条件数、
+## 矩阵指数和稀疏系统迭代求解器。
 
 import std/math
 import ./matrix
 import ./calculus
 
-# --- Norms ---------------------------------------------------------------
+# --- 范数 ---------------------------------------------------------------
 
 proc norm*(x: float, p = 1): float = abs(x)
 
@@ -37,10 +37,10 @@ proc conditionNumber*(f: proc(x: float): float, x: float,
 proc conditionNumber*(a: Matrix): float =
   norm(a) * norm(1.0 / a)
 
-# --- Matrix exponential -------------------------------------------------
+# --- 矩阵指数 -----------------------------------------------------------
 
 proc exp*(a: Matrix, ap = 1e-6, rp = 1e-4, ns = 40): Matrix =
-  ## Matrix exponential by Taylor series.
+  ## 使用泰勒级数计算矩阵指数。
   var t = identity(a.ncols)
   var s = identity(a.ncols)
   for k in 1 ..< ns:
@@ -50,10 +50,10 @@ proc exp*(a: Matrix, ap = 1e-6, rp = 1e-4, ns = 40): Matrix =
       return s
   raise newException(ArithmeticDefect, "no convergence")
 
-# --- Cholesky decomposition ---------------------------------------------
+# --- Cholesky 分解 ------------------------------------------------------
 
 proc cholesky*(a: Matrix): Matrix =
-  ## Returns L such that L * L.T == a.
+  ## 返回 L 使得 L * L.T == a。
   if not isAlmostSymmetric(a):
     raise newException(ArithmeticDefect, "not symmetric")
   let l = newMatrix(a.tolist())
@@ -79,15 +79,15 @@ proc isPositiveDefinite*(a: Matrix): bool =
   try:
     discard cholesky(a)
     return true
-  except Defect:        # cholesky raises ArithmeticDefect on indefinites
+  except Defect:        # cholesky 对不定矩阵抛出 ArithmeticDefect
     return false
   except CatchableError:
     return false
 
-# --- Jacobi eigenvalue decomposition ------------------------------------
+# --- Jacobi 特征值分解 -------------------------------------------------
 
 proc jacobiEigenvalues*(a: Matrix): (Matrix, seq[float]) =
-  ## Returns (U, e) so that `a == U * diagonal(e) * U.T`.
+  ## 返回 (U, e) 使得 `a == U * diagonal(e) * U.T`。
   proc maxind(m: Matrix, k: int): int =
     var j = k + 1
     for i in k + 2 ..< m.ncols:
@@ -168,7 +168,7 @@ proc jacobiEigenvalues*(a: Matrix): (Matrix, seq[float]) =
   (u, e)
 
 proc computeCorrelationMatrix*(v: seq[seq[float]]): Matrix =
-  ## Pearson correlation matrix of `v` (rows are series).
+  ## `v` 的 Pearson 相关矩阵（每行是一个序列）。
   let m = v.len
   let n = v[0].len
   var mus = newSeq[float](m)
@@ -186,12 +186,12 @@ proc computeCorrelationMatrix*(v: seq[seq[float]]): Matrix =
       for k in 1 ..< n: s += v[i][k] * v[j][k]
       (s / float(n) - mus[i] * mus[j]) / sqrt(vars[i] * vars[j]))
 
-# --- Sparse iterative solvers -------------------------------------------
+# --- 稀疏迭代求解器 -----------------------------------------------------
 
 proc invertMinimumResidual*(f: proc(x: Matrix): Matrix,
                             x: Matrix,
                             ap = 1e-4, rp = 1e-4, ns = 200): Matrix =
-  ## Minimum residual iterative solver for `f(x) = y` on sparse linear ops.
+  ## 稀疏线性运算上 `f(x) = y` 的最小残差迭代求解器。
   var y = newMatrix(x.tolist())
   var r = x - f(x)
   for k in 0 ..< ns:
@@ -206,7 +206,7 @@ proc invertMinimumResidual*(f: proc(x: Matrix): Matrix,
 proc invertBicgstab*(f: proc(x: Matrix): Matrix,
                      x: Matrix,
                      ap = 1e-4, rp = 1e-4, ns = 200): Matrix =
-  ## Stabilized bi-conjugate gradient iterative solver.
+  ## 稳定的双共轭梯度迭代求解器。
   var y = newMatrix(x.tolist())
   var r = x - f(x)
   let q = newMatrix(r.tolist())

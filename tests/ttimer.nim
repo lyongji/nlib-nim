@@ -11,5 +11,5 @@ suite "timer":
     proc slow() = sleep(5)
     let dt = timef(slow, ns = 1_000_000, dt = 0.05)
     check dt > 0.0
-    # average per call must be at least the sleep duration
+    # 每次调用的平均值至少应为睡眠时长
     check dt >= 0.005 * 0.5

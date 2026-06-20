@@ -24,15 +24,14 @@ suite "graph":
     check ds.join(0, 1) == true
     check ds.len == 4
     check ds.joined(0, 1) == true
-    check ds.join(0, 1) == false   # already joined
+    check ds.join(0, 1) == false   # 已合并
     check ds.join(2, 3) == true
     check ds.join(1, 3) == true
     check ds.len == 2
 
   test "makeMaze tears down enough walls":
     let (remaining, tornDown) = makeMaze(5, 2)
-    # In any 5x5 maze, exactly 24 walls must be torn down to connect
-    # all 25 cells (one per cell minus one).
+    # 在任何 5x5 迷宫中，必须拆除恰好 24 面墙才能连通所有 25 个格子（每格减一）。
     check tornDown.len == 24
     check remaining.len > 0
 

@@ -14,7 +14,7 @@ suite "bst":
   test "missing key returns default":
     let t = newBinarySearchTree[int, string]()
     t[5] = "x"
-    check t[42] == ""    # default(string)
+    check t[42] == ""    # 默认值(string)
 
   test "min and max":
     let t = newBinarySearchTree[int, string]()

@@ -1,11 +1,11 @@
-## One- and multi-dimensional root finders and optimizers.
+## 一维和多维求根与优化。
 
 import std/math
 import ./matrix
 import ./calculus
 import ./linalg
 
-# --- 1D root finders ----------------------------------------------------
+# --- 一维求根 ----------------------------------------------------------
 
 proc solveFixedPoint*(f: proc(x: float): float, x0: float,
                       ap = 1e-6, rp = 1e-4, ns = 100): float =
@@ -74,7 +74,7 @@ proc solveSecant*(f: proc(x: float): float, x0: float,
     Dfx = (fx - fxOld) / (x - xOld)
   raise newException(ArithmeticDefect, "no convergence")
 
-# --- 1D optimizers ------------------------------------------------------
+# --- 一维优化 ----------------------------------------------------------
 
 proc optimizeBisection*(f: proc(x: float): float, a, b: float,
                         ap = 1e-6, rp = 1e-4, ns = 100): float =
@@ -133,7 +133,7 @@ proc optimizeGoldenSearch*(f: proc(x: float): float, a0, b0: float,
     if k > 2 and norm(b - a) < max(ap, norm(b) * rp): return b
   raise newException(ArithmeticDefect, "no convergence")
 
-# --- Multi-dim solvers and optimizers -----------------------------------
+# --- 多维求解器与优化 ---------------------------------------------------
 
 proc solveNewtonMulti*(f: proc(x: seq[float]): seq[float],
                        x0: seq[float],
@@ -168,7 +168,7 @@ proc optimizeNewtonMulti*(f: proc(x: seq[float]): float,
 proc optimizeNewtonMultiImproved*(
     f: proc(x: seq[float]): float, x0: seq[float],
     ap = 1e-6, rp = 1e-4, ns = 20, hStart = 10.0): seq[float] =
-  ## Newton optimizer with line-search fallback to steepest descent.
+  ## Newton 优化器，附带线搜索回退至最速下降法。
   var x = newMatrix(x0)
   var fx = f(x.flatten())
   var h = hStart

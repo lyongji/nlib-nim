@@ -1,7 +1,7 @@
-## Thin wrappers around `gnuplot` for the figures in the book. Each
-## helper writes its data to `<filename>.dat` and then invokes
-## `gnuplot` to render `<filename>` (the output format is determined by
-## the file extension; PNG is the default in the templates below).
+## `gnuplot` 的薄封装，用于生成书中的图表。
+## 每个辅助函数将数据写入 `<filename>.dat`，
+## 然后调用 `gnuplot` 渲染 `<filename>`
+##（输出格式由文件扩展名决定；以下模板默认使用 PNG）。
 
 import std/[math, osproc, strutils]
 
@@ -14,7 +14,7 @@ proc writeXY(path: string, xs, ys: openArray[float]) =
 
 proc savePlot*(filename: string, xs, ys: openArray[float],
                title = "", xlab = "x", ylab = "y") =
-  ## Line plot of `(xs, ys)`.
+  ## `(xs, ys)` 的折线图。
   let dataPath = filename & ".dat"
   writeXY(dataPath, xs, ys)
   discard execCmd("gnuplot -e \"" &
@@ -28,7 +28,7 @@ proc savePlot*(filename: string, xs, ys: openArray[float],
 proc saveHistogram*(filename: string, xs: openArray[float],
                     title = "", xlab = "x", ylab = "count",
                     bins = 20) =
-  ## 1-D histogram of the values in `xs`.
+  ## `xs` 中值的一维直方图。
   let dataPath = filename & ".dat"
   var f = open(dataPath, fmWrite)
   for x in xs: f.writeLine x.formatFloat(ffDecimal, 6)
@@ -49,7 +49,7 @@ proc saveHistogram*(filename: string, xs: openArray[float],
 proc saveErrorbar*(filename: string,
                    xs, ys, dys: openArray[float],
                    title = "", xlab = "x", ylab = "y") =
-  ## Plot `(xs, ys)` with vertical error bars `dys`.
+  ## 绘制 `(xs, ys)` 并带垂直误差线 `dys`。
   let dataPath = filename & ".dat"
   var f = open(dataPath, fmWrite)
   for i in 0 ..< xs.len:
@@ -69,8 +69,8 @@ proc saveErrorbar*(filename: string,
 proc saveErrorbarSeries*[K](filename: string,
                             data: openArray[(K, seq[(float, float, float)])],
                             xlab = "x", ylab = "y") =
-  ## Plot a family of error-bar series indexed by `K`. Each series has
-  ## the form `(x, y, dy)` triples.
+  ## 绘制由 `K` 索引的一组误差线序列。
+  ## 每个序列为 `(x, y, dy)` 三元组。
   let dataPath = filename & ".dat"
   var f = open(dataPath, fmWrite)
   for (label, series) in data:
@@ -92,7 +92,7 @@ proc saveErrorbarSeries*[K](filename: string,
 
 proc saveHeatmap*(filename: string, grid: seq[seq[float]],
                   title = "", xlab = "x", ylab = "y") =
-  ## Render a 2-D matrix as a heatmap.
+  ## 将二维矩阵渲染为热力图。
   let dataPath = filename & ".dat"
   var f = open(dataPath, fmWrite)
   for row in grid:

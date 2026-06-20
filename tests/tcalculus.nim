@@ -10,8 +10,7 @@ suite "calculus":
     check abs(d(3.0) - 1.0) < 1e-4   # 2*3 - 5 = 1
 
   test "second derivative of x^2 - 5x":
-    # DD uses central differences with `h^2` in the denominator, so
-    # the achievable numerical precision is much looser than for D.
+    # DD 使用中心差分，分母为 `h²`，因此可达到的数值精度远低于 D。
     proc f(x: float): float = x * x - 5.0 * x
     let dd = DD(f)
     check abs(dd(0.0) - 2.0) < 1e-2

@@ -1,10 +1,10 @@
-## Taylor-series implementations of `exp`, `sin`, and `cos` --- pedagogical
-## stand-ins for `std/math.exp`, `std/math.sin`, `std/math.cos`.
+## `exp`、`sin` 和 `cos` 的泰勒级数实现 ——
+## 教学用替代 `std/math.exp`、`std/math.sin`、`std/math.cos`。
 
 import std/math
 
 proc myexp*(x: float, precision = 1e-6, maxSteps = 40): float =
-  ## Taylor-series exponential.
+  ## 泰勒级数指数函数。
   if x == 0:
     return 1.0
   if x > 0:
@@ -18,7 +18,7 @@ proc myexp*(x: float, precision = 1e-6, maxSteps = 40): float =
   raise newException(ArithmeticDefect, "no convergence")
 
 proc mysin*(x: float, precision = 1e-6, maxSteps = 40): float =
-  ## Taylor-series sine, with domain reduction for large `x`.
+  ## 泰勒级数正弦函数，对大 `x` 进行值域归约。
   if x == 0:
     return 0
   if x < 0:
@@ -41,7 +41,7 @@ proc mysin*(x: float, precision = 1e-6, maxSteps = 40): float =
   raise newException(ArithmeticDefect, "no convergence")
 
 proc mycos*(x: float, precision = 1e-6, maxSteps = 40): float =
-  ## Taylor-series cosine, with domain reduction for large `x`.
+  ## 泰勒级数余弦函数，对大 `x` 进行值域归约。
   if x == 0:
     return 1.0
   if x < 0:

@@ -1,14 +1,14 @@
-## Generic Monte Carlo engine, bootstrap resampling, MC integration.
+## 通用蒙特卡洛引擎、Bootstrap 重抽样、MC 积分。
 
 import std/[algorithm, math, random]
 import ./stats
 import ./randomgen
 
-# --- Bootstrap ---------------------------------------------------------
+# --- Bootstrap 重抽样 ---------------------------------------------------
 
 proc bootstrap*(x: seq[float], confidence = 0.68, nsamples = 100):
                 (float, float, float) =
-  ## Bootstrap confidence interval. Returns (lower, mean, upper).
+  ## Bootstrap 置信区间。返回（下限, 均值, 上限）。
   var means: seq[float] = @[]
   for _ in 0 ..< nsamples: means.add mean(resample(x))
   means.sort()
@@ -16,7 +16,7 @@ proc bootstrap*(x: seq[float], confidence = 0.68, nsamples = 100):
   let rightTail = nsamples - 1 - leftTail
   (means[leftTail], mean(x), means[rightTail])
 
-# --- Generic Monte Carlo engine ----------------------------------------
+# --- 通用蒙特卡洛引擎 ---------------------------------------------------
 
 type
   MCEngine* = ref object of RootObj
@@ -52,10 +52,10 @@ proc valueAtRisk*(e: MCEngine, confidence = 95): float =
     raise newException(ArithmeticDefect, "not enough data, not reliable")
   e.results[index]
 
-# --- Monte Carlo integration -------------------------------------------
+# --- 蒙特卡洛积分 -------------------------------------------------------
 
 proc integrateMc*(f: proc(x: float): float, a, b: float,
                   N = 1000): float =
-  ## Naive Monte Carlo integration: average of `f` at uniform samples.
+  ## 朴素蒙特卡洛积分：均匀采样下 `f` 的平均值。
   for _ in 0 ..< N: result += f(rand(b - a) + a)
   result = result / float(N) * (b - a)

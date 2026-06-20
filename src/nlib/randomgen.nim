@@ -1,14 +1,13 @@
-## Pseudo-random number generators and probability distributions.
+## 伪随机数生成器与概率分布。
 ##
-## Two custom generators are provided for didactic purposes (an LCG and
-## a 32-bit Mersenne Twister) alongside a `RandomSource` adapter that
-## wraps any `proc(): float` and exposes the distributions used in the
-## book (uniform, Bernoulli, binomial, Poisson, exponential, Pareto,
-## point-on-circle/sphere, etc.).
+## 为教学目的提供了两个自定义生成器（LCG 和 32 位 Mersenne Twister），
+## 以及一个 `RandomSource` 适配器，它封装任意 `proc(): float`
+## 并暴露书中使用的各种分布（均匀、伯努利、二项、泊松、指数、
+## Pareto、圆/球上的点等）。
 
 import std/[bitops, math, options, random]
 
-# --- Linear congruential generator -------------------------------------
+# --- 线性同余生成器 ----------------------------------------------------
 
 type
   MCG* = ref object
@@ -25,20 +24,20 @@ proc random*(g: MCG): float =
   float(g.next()) / float(g.m)
 
 proc leapfrog*(mcg: MCG, k: int): seq[MCG] =
-  ## Generate `k` independent leapfrog sub-streams from `mcg`.
-  # Compute (mcg.a^k) mod mcg.m incrementally to avoid integer overflow.
+  ## 从 `mcg` 生成 `k` 个独立的蛙跳子流。
+  # 增量计算 (mcg.a^k) mod mcg.m 以避免整数溢出。
   var a = 1
   for _ in 0 ..< k:
     a = (a * mcg.a) mod mcg.m
   for i in 0 ..< k:
     result.add newMCG(mcg.next(), a, mcg.m)
 
-# --- 32-bit Mersenne Twister (MT19937) ---------------------------------
+# --- 32 位 Mersenne Twister (MT19937) ----------------------------------
 
 type
   MarsenneTwister* = ref object
     w*: array[625, uint32]
-    wi*: int
+    wi*: int    # 当前状态索引
 
 proc newMarsenneTwister*(seed: uint32 = 4357'u32): MarsenneTwister =
   result = MarsenneTwister()
@@ -75,11 +74,11 @@ proc random*(g: MarsenneTwister): float =
   y = y xor (y shr 18)
   result = float(y) / float(0xffffffff'u32)
 
-# --- RandomSource adapter ----------------------------------------------
+# --- RandomSource 适配器 -----------------------------------------------
 
 type
   RandomSource* = ref object
-    generator*: proc(): float    # any uniform `[0, 1)` source
+    generator*: proc(): float    # 任意均匀 `[0, 1)` 源
 
 proc newRandomSource*(generator: proc(): float = nil): RandomSource =
   let g = if generator.isNil: (proc(): float = rand(1.0)) else: generator
@@ -104,7 +103,7 @@ proc lookup*[K](r: RandomSource, table: seq[(K, float)],
     u = u - p
   raise newException(ArithmeticDefect, "invalid probability")
 
-# --- Fishman-Yarberry tree lookup --------------------------------------
+# --- Fishman-Yarberry 树查找 -------------------------------------------
 
 type
   FishmanYarberry*[K] = ref object
@@ -148,7 +147,7 @@ proc discreteMap*[K](fy: FishmanYarberry[K], u: float): K =
     j += 1
   fy.table[j][0]
 
-# --- Discrete distributions --------------------------------------------
+# --- 离散分布 ----------------------------------------------------------
 
 proc binomial*(r: RandomSource, n: int, p: float,
                epsilon = 1e-6): int =
@@ -181,7 +180,7 @@ proc poisson*(r: RandomSource, lamb: float, epsilon = 1e-6): int =
     q = q * lamb / float(k + 1)
     k += 1
 
-# --- Continuous distributions ------------------------------------------
+# --- 连续分布 ----------------------------------------------------------
 
 proc uniform*(r: RandomSource, a, b: float): float =
   a + (b - a) * r.random()
@@ -219,7 +218,7 @@ proc pointOnSphere*(r: RandomSource, radius = 1.0):
   let nrm = sqrt(x * x + y * y + z * z)
   (x / nrm, y / nrm, z / nrm)
 
-# --- Marsaglia-polar Gaussian via cached pair --------------------------
+# --- Marsaglia-Polar 高斯（缓存对）--------------------------------------
 
 type
   GaussRandomSource* = ref object
@@ -245,7 +244,7 @@ proc gauss*(g: GaussRandomSource, mu = 0.0, sigma = 1.0): float =
     g.other = some(sqrt(-2.0 * ln(r) / r) * v2)
   mu + sigma * thisVal
 
-# --- Confidence intervals & resampling ---------------------------------
+# --- 置信区间与重抽样 --------------------------------------------------
 
 const CONFIDENCE* = [
   (0.68,    1.0),

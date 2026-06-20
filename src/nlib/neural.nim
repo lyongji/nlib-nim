@@ -1,4 +1,4 @@
-## Simple back-propagation neural network with one hidden layer.
+## 带一个隐藏层的简单反向传播神经网络。
 
 import std/[math, random, sequtils]
 import ./matrix
@@ -8,7 +8,7 @@ type
     ni*, nh*, no*: int
     ai*, ah*, ao*: seq[float]
     wi*, wo*: Matrix
-    ci*, co*: Matrix         # last weight change (momentum)
+    ci*, co*: Matrix         # 上次权重变化（动量）
 
 proc nnRand(a, b: float): float = (b - a) * rand(1.0) + a
 proc sigmoid*(x: float): float = tanh(x)
@@ -16,7 +16,7 @@ proc dsigmoid*(y: float): float = 1.0 - y * y
 
 proc newNeuralNetwork*(ni, nh, no: int): NeuralNetwork =
   result = NeuralNetwork(
-    ni: ni + 1,                           # +1 for bias node
+    ni: ni + 1,                           # 偏置节点 +1
     nh: nh, no: no,
     ai: newSeqWith(ni + 1, 1.0),
     ah: newSeqWith(nh, 1.0),

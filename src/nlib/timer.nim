@@ -1,10 +1,10 @@
-## Wall-clock timing helper.
+## 挂钟计时辅助函数。
 
 import std/times
 
 proc timef*(f: proc(), ns = 1000, dt = 60.0): float =
-  ## Calls `f` repeatedly and returns the average wall-clock time per
-  ## call, capped at `ns` iterations or `dt` seconds.
+  ## 重复调用 `f` 并返回每次调用的平均挂钟时间，
+  ## 最多 `ns` 次迭代或 `dt` 秒。
   let t0 = epochTime()
   var t = t0
   var k = 1

@@ -1,27 +1,26 @@
-## Financial routines: fake stock-price generation, Markowitz tangency
-## portfolio, simple trading strategy, continuum knapsack, and a
-## random-vector iterator with a given covariance.
+## 金融工具：虚拟股票价格生成、Markowitz 切线投资组合、
+## 简单交易策略、连续背包问题和给定协方差的随机向量迭代器。
 
 import std/[algorithm, math, random]
 import ./matrix
 import ./linalg
 import ./fitting
 
-# --- Random vectors with prescribed covariance --------------------------
+# --- 带指定协方差的随机向量 ----------------------------------------------
 
 iterator randomList*(a: Matrix): seq[float] =
-  ## Yields successive random vectors with covariance matrix `a`.
+  ## 生成协方差矩阵为 `a` 的连续随机向量。
   let l = cholesky(a)
   while true:
     var u = newMatrix(l.nrows, 1)
     for c in 0 ..< l.nrows: u[c, 0] = gauss(0.0, 1.0)
     yield (l * u).flatten()
 
-# --- Markowitz portfolio ------------------------------------------------
+# --- Markowitz 投资组合 -------------------------------------------------
 
 proc markowitz*(mu, a: Matrix, rFree: float):
                 (seq[float], float, float) =
-  ## Markowitz tangency portfolio. Returns (weights, return, risk).
+  ## Markowitz 切线投资组合。返回（权重, 收益, 风险）。
   var x = (1.0 / a) * (mu - rFree)
   var s = 0.0
   for r in 0 ..< x.nrows: s += x[r, 0]
@@ -32,11 +31,11 @@ proc markowitz*(mu, a: Matrix, rFree: float):
   let risk = sqrt((x.T * (a * x))[0, 0])
   (portfolio, ret, risk)
 
-# --- Knapsack (continuous variant) --------------------------------------
+# --- 背包问题（连续变体）-----------------------------------------------
 
 proc continuumKnapsack*(a, b: seq[float], c: float):
                        (float, seq[(int, float)]) =
-  ## Greedy continuous knapsack. Returns (total return, [(index, fraction)]).
+  ## 贪心连续背包。返回（总收益, [(索引, 比例)]）。
   var table: seq[(float, int)] = @[]
   for i in 0 ..< a.len: table.add (a[i] / b[i], i)
   table.sort(SortOrder.Descending)
@@ -50,7 +49,7 @@ proc continuumKnapsack*(a, b: seq[float], c: float):
     f += a[i] * quantity
   (f, x)
 
-# --- Simple trading strategy and synthetic prices ----------------------
+# --- 简单交易策略与合成价格 ----------------------------------------------
 
 type
   Trader* = ref object

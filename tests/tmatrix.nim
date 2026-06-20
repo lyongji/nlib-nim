@@ -33,7 +33,7 @@ suite "matrix":
     check s[0, 0] == 2.0 and s[1, 1] == 8.0
     let n = -a
     check n[0, 0] == -1.0
-    let p = a + 1.0          # square + scalar -> add identity
+    let p = a + 1.0          # 方阵 + 标量 -> 加单位矩阵
     check p[0, 0] == 2.0 and p[0, 1] == 2.0
 
   test "matrix multiplication":

@@ -1,12 +1,12 @@
-## Max-heap operations on a `seq[T]`. The standard library's `std/heapqueue`
-## is a min-heap; this module is the max-heap counterpart used in the book.
+## `seq[T]` 上的最大堆操作。标准库的 `std/heapqueue` 是最小堆；
+## 本模块是书中使用的最大堆对应实现。
 
 proc heapParent(i: int): int = (i - 1) div 2
 proc heapLeftChild(i: int): int = 2 * i + 1
 proc heapRightChild(i: int): int = 2 * i + 2
 
 proc heapifyOne*[T](a: var seq[T], i: int, heapsize = -1) =
-  ## Restore the max-heap property at index `i`.
+  ## 恢复索引 `i` 处的最大堆性质。
   let heapsize = if heapsize < 0: a.len else: heapsize
   let left = heapLeftChild(i)
   let right = heapRightChild(i)
@@ -20,19 +20,19 @@ proc heapifyOne*[T](a: var seq[T], i: int, heapsize = -1) =
     heapifyOne(a, largest, heapsize)
 
 proc heapify*[T](a: var seq[T]) =
-  ## Reorder `a` into a max-heap. O(n).
+  ## 将 `a` 重排为最大堆。O(n)。
   for i in countdown(a.len div 2 - 1, 0):
     heapifyOne(a, i)
 
 proc heapsort*[T](a: var seq[T]) =
-  ## In-place heapsort. O(n log n).
+  ## 原地堆排序。O(n log n)。
   heapify(a)
   for i in countdown(a.len - 1, 1):
     swap(a[0], a[i])
     heapifyOne(a, 0, i)
 
 proc heapPop*[T](a: var seq[T]): T =
-  ## Remove and return the maximum element of the heap.
+  ## 移除并返回堆的最大元素。
   if a.len < 1:
     raise newException(IndexDefect, "Heap Underflow")
   result = a[0]
@@ -42,7 +42,7 @@ proc heapPop*[T](a: var seq[T]): T =
     heapifyOne(a, 0)
 
 proc heapPush*[T](a: var seq[T], value: T) =
-  ## Insert `value` into the heap, preserving the max-heap property.
+  ## 将 `value` 插入堆中，保持最大堆性质。
   a.add value
   var i = a.len - 1
   while i > 0:

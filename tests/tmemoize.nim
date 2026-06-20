@@ -28,5 +28,5 @@ suite "memoize":
     discard f(15)
     let firstCalls = calls
     discard f(15)
-    # second call should be a cache hit
+    # 第二次调用应为缓存命中
     check calls == firstCalls

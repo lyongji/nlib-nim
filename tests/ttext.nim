@@ -13,7 +13,7 @@ suite "text":
     let z = needlemanWunsch("ATGC", "ATGC")
     check z.len == 4
     check z[0].len == 4
-    # Diagonal should grow with each match
+    # 对角线应随每次匹配而增长
     check z[3][3] >= 4.0 * 0.5
 
   test "needlemanWunsch identical strings score n":

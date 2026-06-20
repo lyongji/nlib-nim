@@ -9,7 +9,7 @@ suite "linalg":
     let v = newMatrix(@[3.0, 4.0])
     check abs(norm(v, p = 2) - 5.0) < 1e-9
     let m = newMatrix(@[@[1.0, 2.0], @[3.0, 4.0]])
-    check norm(m) == 6.0   # max column sum: |1|+|3|=4, |2|+|4|=6
+    check norm(m) == 6.0   # 最大列和：|1|+|3|=4, |2|+|4|=6
 
   test "conditionNumber for f(x) = x^2 - 5x":
     proc f(x: float): float = x * x - 5.0 * x
@@ -52,12 +52,11 @@ suite "linalg":
               @[2.0, 4.0, 6.0, 8.0],
               @[1.0, 0.5, 0.0, -0.5]]
     let c = computeCorrelationMatrix(v)
-    # series 0 vs itself ~ 1.0 (within float jitter); series 0 vs 1
-    # is perfectly correlated.
+    # 序列 0 与自身 ~ 1.0（浮点抖动内）；序列 0 与 1 完全相关。
     check abs(c[0, 1] - c[1, 0]) < 1e-9
 
   test "minimum residual solves a simple linear system":
-    # f(x) = 2x; solving f(x) = y means x = y/2.
+    # f(x) = 2x；解 f(x) = y 意味着 x = y/2。
     proc f(x: Matrix): Matrix = 2.0 * x
     let y = newMatrix(@[2.0, 4.0, 6.0])
     let x = invertMinimumResidual(f, y, ns = 200)

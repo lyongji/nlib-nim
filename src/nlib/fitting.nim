@@ -1,4 +1,4 @@
-## Linear and nonlinear least-squares fitting.
+## 线性和非线性最小二乘拟合。
 
 import std/math
 import ./matrix
@@ -11,7 +11,7 @@ type
 proc fitLeastSquares*(points: seq[(float, float, float)],
                       f: seq[FitFunc]):
                       (seq[float], float, proc(x: float): float) =
-  ## Linear least-squares fit. Returns (coefficients, chi2, fit function).
+  ## 线性最小二乘拟合。返回（系数, chi2, 拟合函数）。
   let n = points.len
   let m = f.len
   let a = newMatrix(n, m)
@@ -32,10 +32,10 @@ proc fitLeastSquares*(points: seq[(float, float, float)],
   (cs, chi2Val, fittingF)
 
 proc polynomial*(n: int): seq[FitFunc] =
-  ## Returns the basis [1, x, x^2, ..., x^n] as a sequence of FitFuncs.
+  ## 返回基函数 [1, x, x², ..., xⁿ] 作为 FitFunc 序列。
   proc monomial(power: int): FitFunc =
-    # Wrap closure creation in a separate proc so each closure
-    # captures its own `power` parameter.
+    # 将闭包创建封装在单独的 proc 中，以便每个闭包
+    # 捕获自己的 `power` 参数。
     result = proc(x: float): float = x ^ power
   for p in 0 .. n:
     result.add monomial(p)
@@ -46,7 +46,7 @@ let QUADRATIC* = polynomial(2)
 let CUBIC*     = polynomial(3)
 let QUARTIC*   = polynomial(4)
 
-# --- Generic chi^2 fit (linear in `a`, nonlinear in `b`) ----------------
+# --- 通用 chi² 拟合（关于 `a` 线性，关于 `b` 非线性）-----------------------
 
 type
   NonlinearFit* = proc(b: seq[float], x: float): float
@@ -57,8 +57,8 @@ proc fit*(data: seq[(float, float, float)],
           ap = 1e-6, rp = 1e-4, ns = 200,
           constraint: proc(b: seq[float]): float = nil
           ): (seq[float], float) =
-  ## Fits `\sum_j a_j fs[j](b, x)` to weighted points (x, y, dy);
-  ## linear in the `a_j` and nonlinear in the parameter vector `b`.
+  ## 对加权点 (x, y, dy) 拟合 `\sum_j a_j fs[j](b, x)`；
+  ## 关于 `a_j` 线性，关于参数向量 `b` 非线性。
   let na = fs.len
   proc core(b: seq[float]): (seq[float], float) =
     let A = newMatrix(data.len, na,

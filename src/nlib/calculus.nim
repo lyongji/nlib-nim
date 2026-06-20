@@ -1,19 +1,19 @@
-## Numerical derivatives, gradients, Hessians, and Jacobians.
+## 数值导数、梯度、Hessian 矩阵和 Jacobian 矩阵。
 
 import ./matrix
 
 proc D*(f: proc(x: float): float, h = 1e-6): proc(x: float): float =
-  ## First derivative of `f` (central difference).
+  ## `f` 的一阶导数（中心差分）。
   result = proc(x: float): float = (f(x + h) - f(x - h)) / 2.0 / h
 
 proc DD*(f: proc(x: float): float, h = 1e-6): proc(x: float): float =
-  ## Second derivative of `f` (central difference).
+  ## `f` 的二阶导数（中心差分）。
   result = proc(x: float): float =
     (f(x + h) - 2.0 * f(x) + f(x - h)) / (h * h)
 
 proc partial*(f: proc(x: seq[float]): float, i: int, h = 1e-4):
               proc(x: seq[float]): float =
-  ## i-th partial derivative of a scalar-valued multi-variate function.
+  ## 标量值多元函数的第 i 个偏导数。
   result = proc(x: seq[float]): float =
     var x = x
     x[i] += h
@@ -24,7 +24,7 @@ proc partial*(f: proc(x: seq[float]): float, i: int, h = 1e-4):
 
 proc partial*(f: proc(x: seq[float]): seq[float], i: int, h = 1e-4):
               proc(x: seq[float]): seq[float] =
-  ## i-th partial derivative of a vector-valued function.
+  ## 向量值函数的第 i 个偏导数。
   result = proc(x: seq[float]): seq[float] =
     var x = x
     x[i] += h
